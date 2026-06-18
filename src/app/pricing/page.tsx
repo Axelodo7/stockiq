@@ -156,7 +156,7 @@ export default function PricingPage() {
                     ))}
                   </ul>
 
-                  <Link
+                  <a
                     href={tier.href}
                     className={`block w-full rounded-xl py-2.5 text-center text-sm font-bold transition-all ${
                       tier.highlighted
@@ -165,7 +165,7 @@ export default function PricingPage() {
                     }`}
                   >
                     {tier.cta}
-                  </Link>
+                  </a>
                 </div>
               );
             })}
