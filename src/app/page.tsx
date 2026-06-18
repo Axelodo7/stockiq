@@ -122,7 +122,7 @@ export default function MarketingHome() {
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button size="lg" asChild>
-                <a href="/sign-up">Get Started Free</a>
+                <Link href="/sign-up">Get Started Free</Link>
               </Button>
             </div>
           </div>
@@ -228,16 +228,17 @@ export default function MarketingHome() {
                       </li>
                     ))}
                   </ul>
-                    <a
-                      href={tier.href}
-                      className={`flex w-full items-center justify-center rounded-xl py-2.5 text-sm font-bold transition-all ${
-                        tier.highlighted
-                          ? "bg-gradient-to-r from-cyan to-accent text-black hover:shadow-lg hover:shadow-accent/20"
-                          : ""
-                      } ${tier.highlighted ? "" : "border border-white/10 bg-white/[0.03] text-foreground hover:bg-white/[0.06]"}`}
-                    >
-                      {tier.cta}
-                    </a>
+                  <Button
+                    className={`w-full rounded-xl ${
+                      tier.highlighted
+                        ? "bg-gradient-to-r from-cyan to-accent text-black font-bold hover:shadow-lg hover:shadow-accent/20"
+                        : ""
+                    }`}
+                    variant={tier.highlighted ? "default" : "outline"}
+                    asChild
+                  >
+                    <Link href={tier.href}>{tier.cta}</Link>
+                  </Button>
                 </div>
               );
             })}
@@ -274,7 +275,7 @@ export default function MarketingHome() {
           </p>
           <div className="mt-8">
             <Button size="lg" asChild>
-              <a href="/sign-up">Start Free Today</a>
+              <Link href="/sign-up">Start Free Today</Link>
             </Button>
           </div>
         </div>

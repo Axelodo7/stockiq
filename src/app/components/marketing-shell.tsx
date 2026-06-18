@@ -72,10 +72,10 @@ export default function MarketingShell({
 
           <div className="hidden items-center gap-3 md:flex">
             <Button variant="ghost" size="sm" asChild>
-              <a href="/sign-in">Log in</a>
+              <Link href="/sign-in">Log in</Link>
             </Button>
             <Button size="sm" asChild>
-              <a href="/sign-up">Get Started</a>
+              <Link href="/sign-up">Get Started</Link>
             </Button>
           </div>
 
@@ -103,14 +103,14 @@ export default function MarketingShell({
               ))}
               <div className="my-2 border-t border-border" />
               <Button variant="ghost" size="sm" asChild className="justify-start">
-                <a href="/sign-in" onClick={() => setMobileOpen(false)}>
+                <Link href="/sign-in" onClick={() => setMobileOpen(false)}>
                   Log in
-                </a>
+                </Link>
               </Button>
               <Button size="sm" asChild>
-                <a href="/sign-up" onClick={() => setMobileOpen(false)}>
+                <Link href="/sign-up" onClick={() => setMobileOpen(false)}>
                   Get Started
-                </a>
+                </Link>
               </Button>
             </div>
           </div>
