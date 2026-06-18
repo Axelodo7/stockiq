@@ -56,7 +56,7 @@ const navSections = [
   },
 ];
 
-const ADMIN_EMAILS = ["ayyan.zeeshan@gmail.com"];
+const ADMIN_EMAILS = ["ayyan.zeeshan@gmail.com", "arhraja0@gmail.com"];
 
 export function Sidebar() {
   const pathname = usePathname();

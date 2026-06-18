@@ -1,7 +1,7 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { db } from "./db";
 
-const ADMIN_EMAILS = ["ayyan.zeeshan@gmail.com"];
+const ADMIN_EMAILS = ["ayyan.zeeshan@gmail.com", "arhraja0@gmail.com"];
 
 export async function getOrCreateUser(clerkUserId: string) {
   let user = await db.user.findUnique({

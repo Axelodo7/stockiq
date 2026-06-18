@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { createChart, ColorType, CrosshairMode } from "lightweight-charts";
+import { useEffect, useRef, useMemo } from "react";
+import { createChart, ColorType, CrosshairMode, type IChartApi, type ISeriesApi } from "lightweight-charts";
 
 export interface OHLCVBar {
   date: string;
@@ -26,8 +26,33 @@ export function CandlestickChart({
   onCrosshairMove,
 }: CandlestickChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
+  const candleData = useMemo(
+    () =>
+      data.map((d) => ({
+        time: d.date as string,
+        open: d.open,
+        high: d.high,
+        low: d.low,
+        close: d.close,
+      })),
+    [data]
+  );
+
+  const volumeData = useMemo(
+    () =>
+      data.map((d) => ({
+        time: d.date as string,
+        value: d.volume,
+        color: d.close >= d.open ? "rgba(0, 230, 118, 0.2)" : "rgba(255, 23, 68, 0.2)",
+      })),
+    [data]
+  );
+
+  // Create chart once
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -60,7 +85,6 @@ export function CandlestickChart({
 
     chartRef.current = chart;
 
-    // Candlestick series
     const candlestickSeries = chart.addCandlestickSeries({
       upColor: "#00e676",
       downColor: "#ff1744",
@@ -69,38 +93,21 @@ export function CandlestickChart({
       wickDownColor: "#ff1744",
       wickUpColor: "#00e676",
     });
-
-    const candleData = data.map((d) => ({
-      time: d.date as string,
-      open: d.open,
-      high: d.high,
-      low: d.low,
-      close: d.close,
-    }));
-
+    candleSeriesRef.current = candlestickSeries;
     candlestickSeries.setData(candleData as import("lightweight-charts").CandlestickData[]);
 
-    // Volume series
     if (showVolume) {
       const volumeSeries = chart.addHistogramSeries({
         priceFormat: { type: "volume" },
         priceScaleId: "volume",
       });
-
       chart.priceScale("volume").applyOptions({
         scaleMargins: { top: 0.8, bottom: 0 },
       });
-
-      const volumeData = data.map((d) => ({
-        time: d.date as string,
-        value: d.volume,
-        color: d.close >= d.open ? "rgba(0, 230, 118, 0.2)" : "rgba(255, 23, 68, 0.2)",
-      }));
-
+      volumeSeriesRef.current = volumeSeries;
       volumeSeries.setData(volumeData as import("lightweight-charts").HistogramData[]);
     }
 
-    // Crosshair callback
     if (onCrosshairMove) {
       chart.subscribeCrosshairMove((param) => {
         if (!param.time || !param.seriesData) {
@@ -132,8 +139,22 @@ export function CandlestickChart({
       resizeObserver.disconnect();
       chart.remove();
       chartRef.current = null;
+      candleSeriesRef.current = null;
+      volumeSeriesRef.current = null;
     };
-  }, [data, height, showVolume, onCrosshairMove]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Update data via setData — no chart recreation
+  useEffect(() => {
+    if (candleSeriesRef.current) {
+      candleSeriesRef.current.setData(candleData as import("lightweight-charts").CandlestickData[]);
+    }
+    if (volumeSeriesRef.current) {
+      volumeSeriesRef.current.setData(volumeData as import("lightweight-charts").HistogramData[]);
+    }
+    chartRef.current?.timeScale().fitContent();
+  }, [candleData, volumeData]);
 
   return <div ref={containerRef} className="w-full" />;
 }

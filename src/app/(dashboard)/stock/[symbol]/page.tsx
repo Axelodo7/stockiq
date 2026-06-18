@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -41,9 +41,9 @@ import { getStockInfo, generatePriceHistory } from "@/lib/services/market-mock";
 export default function StockDetailPage() {
   const params = useParams();
   const symbol = (params.symbol as string).toUpperCase();
-  const stock = getStockInfo(symbol);
+  const stock = useMemo(() => getStockInfo(symbol), [symbol]);
   const displaySymbol = symbol;
-  const ohlcvData = generatePriceHistory(stock.price, 4788);
+  const ohlcvData = useMemo(() => generatePriceHistory(stock.price, 4788), [stock.price]);
 
   const [prediction, setPrediction] = useState<FullPrediction | null>(null);
   const [loadingPrediction, setLoadingPrediction] = useState(false);
