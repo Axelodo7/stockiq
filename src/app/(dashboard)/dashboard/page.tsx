@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   TrendingUp,
@@ -11,14 +12,17 @@ import {
   ArrowRight,
   BarChart3,
   Zap,
+  Globe,
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { MetricGlass } from "@/components/ui/metric-glass";
 import { GlowBadge } from "@/components/ui/glow-badge";
 import { MiniSparkline } from "@/components/charts/mini-sparkline";
 import { HeatmapGrid } from "@/components/charts/heatmap-grid";
+import { MarketSummaryCard } from "@/components/ai/market-summary-card";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import type { MarketSummary } from "@/lib/services/python-client";
 
 const indices = [
   { ticker: "SPX", name: "S&P 500", value: 5842.31, change: 0.67 },
@@ -69,30 +73,41 @@ function generateSparkData(base: number, positive: boolean): number[] {
 }
 
 export default function DashboardPage() {
+  const [marketSummary, setMarketSummary] = useState<MarketSummary | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/ai/market-summary")
+      .then((r) => r.json())
+      .then((json) => { if (json.success && json.data) setMarketSummary(json.data); })
+      .catch(() => {})
+      .finally(() => setLoadingSummary(false));
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">
+          <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
             <span className="gradient-text">Dashboard</span>
           </h1>
-          <p className="mt-1 text-sm text-muted">Market overview and portfolio insights</p>
+          <p className="mt-1 text-xs text-muted sm:text-sm">Market overview and portfolio insights</p>
         </div>
         <div className="flex items-center gap-2">
           <GlowBadge variant="success" glow>Market Open</GlowBadge>
-          <span className="text-[10px] text-muted">NYSE 9:30 AM ET</span>
+          <span className="text-xs text-muted">NYSE 9:30 AM ET</span>
         </div>
       </div>
 
       {/* Index Tickers */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
         {indices.map((idx) => (
           <GlassCard key={idx.ticker} padding="sm" hover>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-medium uppercase text-muted">{idx.ticker}</p>
-                <p className="font-mono text-lg font-bold">{idx.value.toLocaleString()}</p>
+                <p className="text-xs font-medium uppercase text-muted">{idx.ticker}</p>
+                <p className="font-mono text-base font-bold sm:text-lg">{idx.value.toLocaleString()}</p>
               </div>
               <span
                 className={cn(
@@ -134,13 +149,13 @@ export default function DashboardPage() {
               <Link
                 key={stock.ticker}
                 href={`/stock/${stock.ticker}`}
-                className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-white/[0.02]"
+                className="flex items-center gap-2 px-3 py-2.5 transition-colors hover:bg-white/[0.02] sm:gap-4 sm:px-4 sm:py-3"
               >
-                <div className="w-20">
+                <div className="w-14 sm:w-20">
                   <p className="font-mono text-xs font-bold">{stock.ticker}</p>
-                  <p className="text-[10px] text-muted">{stock.sector}</p>
+                  <p className="text-[10px] text-muted hidden sm:block">{stock.sector}</p>
                 </div>
-                <div className="flex-1">
+                <div className="hidden flex-1 sm:block">
                   <MiniSparkline
                     data={generateSparkData(stock.price, stock.change >= 0)}
                     positive={stock.change >= 0}
@@ -148,11 +163,11 @@ export default function DashboardPage() {
                     height={28}
                   />
                 </div>
-                <div className="text-right">
-                  <p className="font-mono text-sm font-bold">{formatCurrency(stock.price)}</p>
+                <div className="ml-auto text-right">
+                  <p className="font-mono text-xs font-bold sm:text-sm">{formatCurrency(stock.price)}</p>
                   <p
                     className={cn(
-                      "font-mono text-[10px] font-bold",
+                      "font-mono text-[10px] font-bold sm:text-xs",
                       stock.change >= 0 ? "text-positive" : "text-negative"
                     )}
                   >
@@ -178,7 +193,7 @@ export default function DashboardPage() {
           </div>
           <div className="divide-y divide-white/[0.04]">
             {predictions.map((pred) => (
-              <div key={pred.ticker} className="px-4 py-3">
+              <div key={pred.ticker} className="px-3 py-2.5 sm:px-4 sm:py-3">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs font-bold">{pred.ticker}</span>
                   <GlowBadge
@@ -189,7 +204,7 @@ export default function DashboardPage() {
                   </GlowBadge>
                 </div>
                 <div className="mt-1 flex items-center justify-between">
-                  <span className="text-[10px] text-muted">{pred.timeframe} target</span>
+                  <span className="text-xs text-muted">{pred.timeframe} target</span>
                   <span className="font-mono text-xs font-bold">
                     {formatCurrency(pred.price)}
                   </span>
@@ -203,7 +218,7 @@ export default function DashboardPage() {
                     style={{ width: `${pred.confidence * 100}%` }}
                   />
                 </div>
-                <p className="mt-0.5 text-right text-[9px] text-muted">
+                <p className="mt-0.5 text-right text-[10px] text-muted sm:text-xs">
                   {Math.round(pred.confidence * 100)}% confidence
                 </p>
               </div>
@@ -212,7 +227,7 @@ export default function DashboardPage() {
         </GlassCard>
       </div>
 
-      {/* Heatmap + Activity */}
+      {/* Heatmap + Activity + Market Summary */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Heatmap */}
         <GlassCard className="lg:col-span-2">
@@ -223,26 +238,29 @@ export default function DashboardPage() {
           <HeatmapGrid items={heatmapItems} size="md" onClick={(t) => window.location.href = `/stock/${t}`} />
         </GlassCard>
 
-        {/* Recent Activity */}
-        <GlassCard padding="none">
-          <div className="border-b border-white/[0.06] px-4 py-3">
-            <h2 className="font-display text-sm font-semibold">Activity</h2>
-          </div>
-          <div className="divide-y divide-white/[0.04]">
-            {recentActivity.map((item, i) => (
-              <div key={i} className="flex items-start gap-3 px-4 py-3">
-                <div className={cn("mt-0.5", item.color)}>
-                  <item.icon className="h-3.5 w-3.5" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs">{item.label}</p>
-                  <p className="text-[10px] text-muted">{item.time}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </GlassCard>
+        {/* Market Summary */}
+        <MarketSummaryCard data={marketSummary} isLoading={loadingSummary} />
       </div>
+
+      {/* Recent Activity */}
+      <GlassCard padding="none">
+        <div className="border-b border-white/[0.06] px-4 py-3">
+          <h2 className="font-display text-sm font-semibold">Activity</h2>
+        </div>
+        <div className="divide-y divide-white/[0.04]">
+          {recentActivity.map((item, i) => (
+            <div key={i} className="flex items-start gap-3 px-4 py-3">
+              <div className={cn("mt-0.5", item.color)}>
+                <item.icon className="h-3.5 w-3.5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs">{item.label}</p>
+                <p className="text-[10px] text-muted">{item.time}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </GlassCard>
 
       {/* Quick Links */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

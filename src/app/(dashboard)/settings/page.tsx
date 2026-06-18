@@ -90,24 +90,29 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="subscription" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="subscription" className="gap-1.5">
-            <Crown className="h-3.5 w-3.5" />
-            Subscription
-          </TabsTrigger>
-          <TabsTrigger value="features" className="gap-1.5">
-            <Shield className="h-3.5 w-3.5" />
-            Features
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-1.5">
-            <Bell className="h-3.5 w-3.5" />
-            Notifications
-          </TabsTrigger>
-          <TabsTrigger value="profile" className="gap-1.5">
-            <User className="h-3.5 w-3.5" />
-            Profile
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="w-full min-w-0 sm:w-auto">
+            <TabsTrigger value="subscription" className="gap-1.5">
+              <Crown className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Subscription</span>
+              <span className="sm:hidden">Plan</span>
+            </TabsTrigger>
+            <TabsTrigger value="features" className="gap-1.5">
+              <Shield className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Features</span>
+              <span className="sm:hidden">Perks</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="gap-1.5">
+              <Bell className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Notifications</span>
+              <span className="sm:hidden">Alerts</span>
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="gap-1.5">
+              <User className="h-3.5 w-3.5" />
+              Profile
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Subscription Tab */}
         <TabsContent value="subscription" className="space-y-6">
@@ -232,14 +237,14 @@ export default function SettingsPage() {
                   <button
                     onClick={() => item.onChange(!item.checked)}
                     className={cn(
-                      "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors",
+                      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
                       item.checked ? "bg-accent" : "bg-white/10"
                     )}
                   >
                     <span
                       className={cn(
-                        "inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform",
-                        item.checked ? "translate-x-4.5" : "translate-x-0.5"
+                        "inline-block h-4 w-4 rounded-full bg-white transition-transform",
+                        item.checked ? "translate-x-6" : "translate-x-1"
                       )}
                     />
                   </button>

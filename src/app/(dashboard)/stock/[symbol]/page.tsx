@@ -32,7 +32,10 @@ import { ExplainabilityPanel } from "@/components/predictions/explainability-pan
 import { DisclaimerBanner } from "@/components/predictions/disclaimer-banner";
 import { BacktestPanel } from "@/components/predictions/backtest-panel";
 import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
+import { AIAnalysisCard } from "@/components/ai/ai-analysis-card";
+import { TrendAnalysisCard } from "@/components/ai/trend-analysis-card";
 import type { FullPrediction, BacktestResult } from "@/types";
+import type { AIAnalysis, TrendAnalysis } from "@/lib/services/python-client";
 import { getStockInfo, generatePriceHistory } from "@/lib/services/market-mock";
 
 export default function StockDetailPage() {
@@ -68,6 +71,55 @@ export default function StockDetailPage() {
     fetchPrediction();
   }, [displaySymbol, fetchPrediction]);
 
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
+  const [loadingAI, setLoadingAI] = useState(false);
+
+  const fetchAIAnalysis = useCallback(async () => {
+    setLoadingAI(true);
+    try {
+      const res = await fetch("/api/ai/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker: displaySymbol, data: ohlcvData.slice(-60) }),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setAiAnalysis(json.data);
+      }
+    } catch {
+      // Silently fail
+    } finally {
+      setLoadingAI(false);
+    }
+  }, [displaySymbol, ohlcvData]);
+
+  const [trendAnalysis, setTrendAnalysis] = useState<TrendAnalysis | null>(null);
+  const [loadingTrend, setLoadingTrend] = useState(false);
+
+  const fetchTrendAnalysis = useCallback(async () => {
+    setLoadingTrend(true);
+    try {
+      const res = await fetch("/api/ai/trends", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker: displaySymbol, data: ohlcvData }),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setTrendAnalysis(json.data);
+      }
+    } catch {
+      // Silently fail
+    } finally {
+      setLoadingTrend(false);
+    }
+  }, [displaySymbol, ohlcvData]);
+
+  useEffect(() => {
+    fetchAIAnalysis();
+    fetchTrendAnalysis();
+  }, [displaySymbol, fetchAIAnalysis, fetchTrendAnalysis]);
+
   const [backtestResult, setBacktestResult] = useState<BacktestResult | null>(null);
   const [loadingBacktest, setLoadingBacktest] = useState(false);
 
@@ -99,33 +151,33 @@ export default function StockDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-start gap-3 sm:items-center sm:gap-4">
         <Link
           href="/dashboard"
           className="rounded-lg p-2 text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="font-display text-2xl font-bold tracking-tight">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
               <span className="font-mono">{displaySymbol}</span>
             </h1>
             <GlowBadge variant="default">{stock.sector}</GlowBadge>
           </div>
-          <p className="text-sm text-muted">{stock.name}</p>
+          <p className="text-xs text-muted sm:text-sm">{stock.name}</p>
         </div>
-        <div className="text-right">
-          <p className="font-mono text-3xl font-bold">{formatCurrency(stock.price)}</p>
-          <div className="flex items-center justify-end gap-2">
+        <div className="text-right ml-auto">
+          <p className="font-mono text-2xl font-bold sm:text-3xl">{formatCurrency(stock.price)}</p>
+          <div className="flex items-center justify-end gap-1.5 sm:gap-2">
             {stock.change >= 0 ? (
-              <TrendingUp className="h-4 w-4 text-positive" />
+              <TrendingUp className="h-3.5 w-3.5 text-positive sm:h-4 sm:w-4" />
             ) : (
-              <TrendingDown className="h-4 w-4 text-negative" />
+              <TrendingDown className="h-3.5 w-3.5 text-negative sm:h-4 sm:w-4" />
             )}
             <span
               className={cn(
-                "font-mono text-sm font-bold",
+                "font-mono text-xs font-bold sm:text-sm",
                 stock.change >= 0 ? "text-positive" : "text-negative"
               )}
             >
@@ -138,8 +190,8 @@ export default function StockDetailPage() {
 
       {/* Price Range Bar */}
       <GlassCard padding="sm">
-        <div className="flex items-center gap-4">
-          <span className="text-[10px] text-muted">52W Low</span>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <span className="text-[10px] text-muted sm:text-xs">52W Low</span>
           <div className="relative flex-1">
             <div className="h-1.5 w-full rounded-full bg-white/[0.05]">
               <div
@@ -148,12 +200,12 @@ export default function StockDetailPage() {
               />
             </div>
           </div>
-          <span className="text-[10px] text-muted">52W High</span>
+          <span className="text-[10px] text-muted sm:text-xs">52W High</span>
         </div>
         <div className="mt-1 flex justify-between">
-          <span className="font-mono text-[10px] text-negative">{formatCurrency(stock.low52w)}</span>
-          <span className="font-mono text-[10px] font-bold">{formatCurrency(stock.price)}</span>
-          <span className="font-mono text-[10px] text-positive">{formatCurrency(stock.high52w)}</span>
+          <span className="font-mono text-[10px] text-negative sm:text-xs">{formatCurrency(stock.low52w)}</span>
+          <span className="font-mono text-[10px] font-bold sm:text-xs">{formatCurrency(stock.price)}</span>
+          <span className="font-mono text-[10px] text-positive sm:text-xs">{formatCurrency(stock.high52w)}</span>
         </div>
       </GlassCard>
 
@@ -171,39 +223,41 @@ export default function StockDetailPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="charts" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="charts" className="gap-1.5">
-            <BarChart3 className="h-3.5 w-3.5" />
-            Charts
-          </TabsTrigger>
-          <TabsTrigger value="predictions" className="gap-1.5">
-            <Brain className="h-3.5 w-3.5" />
-            Predictions
-          </TabsTrigger>
-          <TabsTrigger value="backtest" className="gap-1.5">
-            <Activity className="h-3.5 w-3.5" />
-            Backtest
-          </TabsTrigger>
-          <TabsTrigger value="analysis" className="gap-1.5">
-            <FileText className="h-3.5 w-3.5" />
-            Analysis
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="w-full min-w-0 sm:w-auto">
+            <TabsTrigger value="charts" className="gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5" />
+              Charts
+            </TabsTrigger>
+            <TabsTrigger value="predictions" className="gap-1.5">
+              <Brain className="h-3.5 w-3.5" />
+              Predictions
+            </TabsTrigger>
+            <TabsTrigger value="backtest" className="gap-1.5">
+              <Activity className="h-3.5 w-3.5" />
+              Backtest
+            </TabsTrigger>
+            <TabsTrigger value="analysis" className="gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              Analysis
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Charts Tab */}
         <TabsContent value="charts" className="space-y-4">
           <GlassCard padding="none">
-            <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+            <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2 sm:px-4 sm:py-3">
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-accent" />
                 <h2 className="font-display text-sm font-semibold">Price Chart</h2>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-0.5 sm:gap-1">
                 {["1D", "1W", "1M", "3M", "6M", "1Y"].map((tf) => (
                   <button
                     key={tf}
                     className={cn(
-                      "rounded px-2 py-0.5 text-[10px] font-medium transition-colors",
+                      "rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors sm:px-2",
                       tf === "3M" ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"
                     )}
                   >
@@ -235,8 +289,8 @@ export default function StockDetailPage() {
         <TabsContent value="predictions" className="space-y-6">
           <DisclaimerBanner />
 
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-display text-base font-semibold sm:text-lg">
               AI Predictions for <span className="font-mono">{displaySymbol}</span>
             </h2>
             <GradientButton
@@ -292,51 +346,25 @@ export default function StockDetailPage() {
 
         {/* Analysis Tab */}
         <TabsContent value="analysis" className="space-y-6">
-          <GlassCard>
-            <div className="mb-4 flex items-center gap-2">
-              <FileText className="h-4 w-4 text-accent" />
-              <h2 className="font-display text-sm font-semibold">Technical Summary</h2>
-            </div>
-            <div className="space-y-0">
-              {[
-                { indicator: "RSI (14)", value: "58.3", signal: "Neutral" },
-                { indicator: "MACD", value: "2.41", signal: "Buy" },
-                { indicator: "Bollinger Bands", value: "Upper", signal: "Hold" },
-                {
-                  indicator: "Moving Avg (50)",
-                  value: formatCurrency(stock.price * 0.97),
-                  signal: "Buy",
-                },
-                {
-                  indicator: "Moving Avg (200)",
-                  value: formatCurrency(stock.price * 0.91),
-                  signal: "Buy",
-                },
-                { indicator: "Stochastic", value: "72.1", signal: "Hold" },
-              ].map((item) => (
-                <div
-                  key={item.indicator}
-                  className="flex items-center justify-between border-b border-white/[0.04] py-3 last:border-0"
-                >
-                  <span className="text-xs text-muted">{item.indicator}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-xs font-medium">{item.value}</span>
-                    <GlowBadge
-                      variant={
-                        item.signal === "Buy"
-                          ? "success"
-                          : item.signal === "Sell"
-                            ? "danger"
-                            : "default"
-                      }
-                    >
-                      {item.signal}
-                    </GlowBadge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </GlassCard>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-display text-base font-semibold sm:text-lg">
+              AI Analysis for <span className="font-mono">{displaySymbol}</span>
+            </h2>
+            <GradientButton
+              variant="ghost"
+              size="sm"
+              onClick={() => { fetchAIAnalysis(); fetchTrendAnalysis(); }}
+              disabled={loadingAI || loadingTrend}
+            >
+              <RefreshCw className={cn("h-3 w-3", (loadingAI || loadingTrend) && "animate-spin")} />
+              Refresh
+            </GradientButton>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <AIAnalysisCard data={aiAnalysis} isLoading={loadingAI} />
+            <TrendAnalysisCard data={trendAnalysis} isLoading={loadingTrend} />
+          </div>
 
           <GlassCard>
             <div className="mb-4 flex items-center gap-2">

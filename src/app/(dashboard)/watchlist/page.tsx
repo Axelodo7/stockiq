@@ -72,12 +72,12 @@ export default function WatchlistPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">
+          <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
             <span className="gradient-text">Watchlist</span>
           </h1>
-          <p className="mt-1 text-sm text-muted">Stocks you&apos;re monitoring</p>
+          <p className="mt-1 text-xs text-muted sm:text-sm">Stocks you&apos;re monitoring</p>
         </div>
         <GradientButton variant="brand" size="sm">
           <Plus className="h-3.5 w-3.5" />
@@ -184,7 +184,7 @@ export default function WatchlistPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-white/[0.04] text-left text-[10px] uppercase text-muted">
+                <tr className="border-b border-white/[0.04] text-left text-xs uppercase text-muted">
                   <th className="px-4 py-2 font-medium">Stock</th>
                   <th className="px-4 py-2 text-right font-medium">Price</th>
                   <th className="px-4 py-2 text-right font-medium">Change</th>

@@ -79,21 +79,21 @@ export default function AlertsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <GlassCard padding="sm" className="text-center">
           <Bell className="mx-auto mb-1 h-4 w-4 text-cyan" />
           <p className="font-mono text-lg font-bold">{activeCount}</p>
-          <p className="text-[10px] text-muted">Active</p>
+          <p className="text-xs text-muted">Active</p>
         </GlassCard>
         <GlassCard padding="sm" className="text-center">
           <BellOff className="mx-auto mb-1 h-4 w-4 text-muted" />
           <p className="font-mono text-lg font-bold">{alerts.length - activeCount}</p>
-          <p className="text-[10px] text-muted">Paused</p>
+          <p className="text-xs text-muted">Paused</p>
         </GlassCard>
         <GlassCard padding="sm" className="text-center">
           <Zap className="mx-auto mb-1 h-4 w-4 text-amber" />
           <p className="font-mono text-lg font-bold">{triggeredAlerts.length}</p>
-          <p className="text-[10px] text-muted">Triggered</p>
+          <p className="text-xs text-muted">Triggered</p>
         </GlassCard>
       </div>
 
@@ -122,34 +122,34 @@ export default function AlertsPage() {
                     {config.label}
                   </GlowBadge>
                 </div>
-                {/* Toggle Switch */}
-                <button
-                  onClick={() => toggleAlert(alert.id)}
-                  className={cn(
-                    "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors",
-                    alert.isActive ? "bg-accent" : "bg-white/10"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform",
-                      alert.isActive ? "translate-x-4.5" : "translate-x-0.5"
-                    )}
-                  />
-                </button>
+                 {/* Toggle Switch */}
+                 <button
+                   onClick={() => toggleAlert(alert.id)}
+                   className={cn(
+                     "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
+                     alert.isActive ? "bg-accent" : "bg-white/10"
+                   )}
+                 >
+                   <span
+                     className={cn(
+                       "inline-block h-4 w-4 rounded-full bg-white transition-transform",
+                       alert.isActive ? "translate-x-6" : "translate-x-1"
+                     )}
+                   />
+                 </button>
               </div>
 
               <div className="px-4 py-3">
-                <p className="text-[10px] text-muted">{alert.name}</p>
+                <p className="text-xs text-muted">{alert.name}</p>
                 <div className="mt-2 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-muted">Condition</span>
+                    <span className="text-xs text-muted">Condition</span>
                     <span className="text-xs font-medium">
                       {alert.condition === "above" ? "Goes Above" : "Goes Below"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-muted">Target</span>
+                    <span className="text-xs text-muted">Target</span>
                     <span className="font-mono text-xs font-bold">
                       {alert.type === "volume"
                         ? `${(alert.targetValue / 1_000_000).toFixed(0)}M`
@@ -159,8 +159,8 @@ export default function AlertsPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-muted">Distance</span>
-                    <span className="font-mono text-[10px] text-muted">{distance ?? "—"}</span>
+                    <span className="text-xs text-muted">Distance</span>
+                    <span className="font-mono text-xs text-muted">{distance ?? "—"}</span>
                   </div>
                 </div>
               </div>
@@ -169,12 +169,12 @@ export default function AlertsPage() {
                 {alert.triggeredAt ? (
                   <>
                     <Zap className="h-3 w-3 text-amber" />
-                    <span className="text-[10px] text-amber">Triggered {alert.triggeredAt}</span>
+                    <span className="text-xs text-amber">Triggered {alert.triggeredAt}</span>
                   </>
                 ) : (
                   <>
                     <Clock className="h-3 w-3 text-muted" />
-                    <span className="text-[10px] text-muted">Created {alert.createdAt}</span>
+                    <span className="text-xs text-muted">Created {alert.createdAt}</span>
                   </>
                 )}
               </div>

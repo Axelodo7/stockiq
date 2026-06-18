@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -18,6 +18,7 @@ import {
   BarChart3,
   Shield,
   Calendar,
+  X,
 } from "lucide-react";
 import { useAppStore } from "@/store/app-store";
 
@@ -66,13 +67,8 @@ export function Sidebar() {
   const tierLabel = isAdmin ? "Enterprise Plan" : "Free Plan";
   const watchlistLimit = isAdmin ? "Unlimited" : "3/3";
 
-  return (
-    <aside
-      className={cn(
-        "glass-strong fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-white/[0.06] transition-all duration-300",
-        sidebarOpen ? "w-64" : "w-[72px]"
-      )}
-    >
+  const navContent = (
+    <>
       {/* Logo */}
       <div className="flex h-16 items-center justify-between px-4">
         {sidebarOpen ? (
@@ -90,6 +86,7 @@ export function Sidebar() {
             <TrendingUp className="h-4 w-4 text-foreground" />
           </Link>
         )}
+        {/* Desktop collapse toggle */}
         <button
           onClick={toggleSidebar}
           className="hidden rounded-lg p-1.5 text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground lg:flex"
@@ -97,6 +94,13 @@ export function Sidebar() {
           <ChevronLeft
             className={cn("h-4 w-4 transition-transform", !sidebarOpen && "rotate-180")}
           />
+        </button>
+        {/* Mobile close button */}
+        <button
+          onClick={toggleSidebar}
+          className="rounded-lg p-1.5 text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground lg:hidden"
+        >
+          <X className="h-4 w-4" />
         </button>
       </div>
 
@@ -116,6 +120,12 @@ export function Sidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={() => {
+                      // Auto-close sidebar on mobile after navigation
+                      if (window.innerWidth < 1024 && sidebarOpen) {
+                        toggleSidebar();
+                      }
+                    }}
                     className={cn(
                       "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
                       isActive
@@ -153,6 +163,38 @@ export function Sidebar() {
           </div>
         </div>
       )}
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+          onClick={toggleSidebar}
+        />
+      )}
+
+      {/* Desktop sidebar — always visible, collapses to icons */}
+      <aside
+        className={cn(
+          "glass-strong fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-white/[0.06] transition-all duration-300 lg:flex",
+          sidebarOpen ? "w-64" : "w-[72px]"
+        )}
+      >
+        {navContent}
+      </aside>
+
+      {/* Mobile sidebar — overlay drawer, always expanded */}
+      <aside
+        className={cn(
+          "glass-strong fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-white/[0.06] transition-transform duration-300 lg:hidden",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {navContent}
+      </aside>
+    </>
   );
 }

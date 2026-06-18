@@ -79,12 +79,12 @@ export default function MarketPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">
+          <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
             <span className="gradient-text">Markets</span>
           </h1>
-          <p className="mt-1 text-sm text-muted">Indices, sectors, and market-wide performance</p>
+          <p className="mt-1 text-xs text-muted sm:text-sm">Indices, sectors, and market-wide performance</p>
         </div>
         <GlowBadge variant="success" glow>Market Open</GlowBadge>
       </div>
@@ -135,7 +135,7 @@ export default function MarketPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-white/[0.04] text-left text-[10px] uppercase text-muted">
+              <tr className="border-b border-white/[0.04] text-left text-xs uppercase text-muted">
                 <th className="px-4 py-2 font-medium">Sector</th>
                 <th className="px-4 py-2 text-right font-medium">Mkt Cap</th>
                 <th className="px-4 py-2 text-right font-medium">Day Change</th>
@@ -236,7 +236,7 @@ export default function MarketPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-white/[0.04] text-left text-[10px] uppercase text-muted">
+              <tr className="border-b border-white/[0.04] text-left text-xs uppercase text-muted">
                 <th className="px-4 py-2 font-medium">Ticker</th>
                 <th className="px-4 py-2 font-medium">Company</th>
                 <th className="px-4 py-2 font-medium">Sector</th>

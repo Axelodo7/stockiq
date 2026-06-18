@@ -15,10 +15,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       <main
         className={cn(
           "pt-16 transition-all duration-300",
-          sidebarOpen ? "ml-64" : "ml-[72px]"
+          sidebarOpen ? "lg:ml-64" : "lg:ml-[72px]"
         )}
       >
-        <div className="p-6">{children}</div>
+        <div className="p-4 sm:p-6">{children}</div>
       </main>
     </div>
   );

@@ -75,12 +75,12 @@ export default function RiskPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">
+          <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
             <span className="gradient-text">Risk Dashboard</span>
           </h1>
-          <p className="mt-1 text-sm text-muted">Portfolio risk analysis and concentration monitoring</p>
+          <p className="mt-1 text-xs text-muted sm:text-sm">Portfolio risk analysis and concentration monitoring</p>
         </div>
         <GlowBadge variant="warning" glow>Risk Score: 6.4/10</GlowBadge>
       </div>
