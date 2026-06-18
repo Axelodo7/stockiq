@@ -1,15 +1,31 @@
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/pricing",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/login(.*)",
+  "/register(.*)",
+  "/api/health",
+  "/api/stocks(.*)",
+  "/api/history(.*)",
+  "/api/predictions(.*)",
+  "/api/ai(.*)",
+]);
+
+const isAuthRoute = createRouteMatcher([
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/login(.*)",
+  "/register(.*)",
+]);
+
+export default clerkMiddleware(async (auth, request) => {
   const response = NextResponse.next();
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/sign-in") ||
-    request.nextUrl.pathname.startsWith("/sign-up") ||
-    request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/register");
-
-  if (!isAuthRoute) {
+  if (!isAuthRoute(request)) {
     const CSP_DIRECTIVES = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://js.clerk.dev https://*.clerk.accounts.dev https://*.clerk.dev https://challenges.cloudflare.com",
@@ -34,7 +50,7 @@ export function middleware(request: NextRequest) {
   response.headers.delete("Server");
 
   return response;
-}
+});
 
 export const config = {
   matcher: [
