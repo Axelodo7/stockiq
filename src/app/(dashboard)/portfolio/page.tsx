@@ -15,8 +15,7 @@ import { GradientButton } from "@/components/ui/gradient-button";
 import { EquityCurveChart } from "@/components/charts/equity-curve";
 import { PortfolioAllocation } from "@/components/charts/portfolio-allocation";
 import { MiniSparkline } from "@/components/charts/mini-sparkline";
-import { formatCurrency, formatPercent, formatCompact } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { formatCurrency, formatPercent, formatCompact, cn, seededRandom } from "@/lib/utils";
 
 const positions = [
   { id: "1", ticker: "AAPL", name: "Apple Inc.", shares: 45, avgCost: 185.30, currentPrice: 214.29 },
@@ -41,10 +40,11 @@ const totalGainLossPercent = (totalGainLoss / totalCost) * 100;
 const dayChange = totalValue * 0.0234;
 
 function generateSparkData(base: number, positive: boolean): number[] {
+  const rng = seededRandom(Math.round(base * 100));
   const data: number[] = [];
   let value = base * 0.98;
   for (let i = 0; i < 20; i++) {
-    value += (Math.random() - 0.48) * (base * 0.008);
+    value += (rng() - 0.48) * (base * 0.008);
     data.push(Math.round(value * 100) / 100);
   }
   return data;

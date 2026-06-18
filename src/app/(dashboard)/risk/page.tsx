@@ -13,8 +13,7 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { MetricGlass } from "@/components/ui/metric-glass";
 import { GlowBadge } from "@/components/ui/glow-badge";
 import { MiniSparkline } from "@/components/charts/mini-sparkline";
-import { formatCurrency, formatPercent } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { formatCurrency, formatPercent, cn, seededRandom } from "@/lib/utils";
 
 const riskMetrics = [
   { label: "Portfolio Beta", value: "1.18", status: "moderate" as const },
@@ -62,10 +61,11 @@ const severityConfig: Record<string, { variant: "danger" | "warning" | "default"
 };
 
 function generateSparkData(base: number, positive: boolean): number[] {
+  const rng = seededRandom(Math.round(base * 100));
   const data: number[] = [];
   let value = base * 0.98;
   for (let i = 0; i < 20; i++) {
-    value += (Math.random() - 0.48) * (base * 0.008);
+    value += (rng() - 0.48) * (base * 0.008);
     data.push(Math.round(value * 100) / 100);
   }
   return data;

@@ -21,7 +21,7 @@ import { MiniSparkline } from "@/components/charts/mini-sparkline";
 import { HeatmapGrid } from "@/components/charts/heatmap-grid";
 import { MarketSummaryCard } from "@/components/ai/market-summary-card";
 import { formatCurrency, formatPercent } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { cn, seededRandom } from "@/lib/utils";
 import type { MarketSummary } from "@/lib/services/python-client";
 
 const indices = [
@@ -63,10 +63,11 @@ const recentActivity = [
 ];
 
 function generateSparkData(base: number, positive: boolean): number[] {
+  const rng = seededRandom(Math.round(base * 100));
   const data: number[] = [];
   let value = base * 0.98;
   for (let i = 0; i < 20; i++) {
-    value += (Math.random() - 0.48) * (base * 0.008);
+    value += (rng() - 0.48) * (base * 0.008);
     data.push(Math.round(value * 100) / 100);
   }
   return data;

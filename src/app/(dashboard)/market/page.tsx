@@ -15,7 +15,7 @@ import { MiniSparkline } from "@/components/charts/mini-sparkline";
 import { HeatmapGrid } from "@/components/charts/heatmap-grid";
 import { SectorMap } from "@/components/charts/sector-map";
 import { formatCurrency, formatPercent } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { cn, seededRandom } from "@/lib/utils";
 
 const indices = [
   { ticker: "SPX", name: "S&P 500", value: 5842.31, change: 0.67, high: 5856.20, low: 5801.44 },
@@ -58,18 +58,19 @@ const stocks = [
 const gainers = [...stocks].sort((a, b) => b.changePercent - a.changePercent).slice(0, 5);
 const losers = [...stocks].sort((a, b) => a.changePercent - b.changePercent).slice(0, 5);
 const mostActive = [...stocks].sort((a, b) => {
-  const volA = a.price * (Math.random() * 100);
-  const volB = b.price * (Math.random() * 100);
+  const volA = a.price * (seededRandom(a.price * 100)() * 100);
+  const volB = b.price * (seededRandom(b.price * 100)() * 100);
   return volB - volA;
 }).slice(0, 5);
 
 const heatmapItems = stocks.map((s) => ({ ticker: s.ticker, changePercent: s.changePercent }));
 
 function generateSparkData(base: number, positive: boolean): number[] {
+  const rng = seededRandom(Math.round(base * 100));
   const data: number[] = [];
   let value = base * 0.98;
   for (let i = 0; i < 20; i++) {
-    value += (Math.random() - 0.48) * (base * 0.008);
+    value += (rng() - 0.48) * (base * 0.008);
     data.push(Math.round(value * 100) / 100);
   }
   return data;

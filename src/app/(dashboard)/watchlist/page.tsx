@@ -16,8 +16,7 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { GlowBadge } from "@/components/ui/glow-badge";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { MiniSparkline } from "@/components/charts/mini-sparkline";
-import { formatCurrency, formatCompact, formatPercent } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { formatCurrency, formatCompact, formatPercent, cn, seededRandom } from "@/lib/utils";
 
 interface WatchlistStock {
   id: string;
@@ -44,10 +43,11 @@ const watchlistStocks: WatchlistStock[] = [
 ];
 
 function generateSparkData(base: number, positive: boolean): number[] {
+  const rng = seededRandom(Math.round(base * 100));
   const data: number[] = [];
   let value = base * 0.98;
   for (let i = 0; i < 20; i++) {
-    value += (Math.random() - 0.48) * (base * 0.008);
+    value += (rng() - 0.48) * (base * 0.008);
     data.push(Math.round(value * 100) / 100);
   }
   return data;

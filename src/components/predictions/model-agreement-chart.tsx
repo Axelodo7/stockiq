@@ -3,7 +3,7 @@
 import type { FullPrediction } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, seededRandom } from "@/lib/utils";
 
 interface ModelAgreementChartProps {
   prediction: FullPrediction;
@@ -18,6 +18,9 @@ const MOCK_MODELS = [
 
 export function ModelAgreementChart({ prediction }: ModelAgreementChartProps) {
   const mainWindow = prediction.windows.find((w) => w.days === 7) || prediction.windows[0];
+
+  // Derive deterministic per-model prices from ticker + price (no Math.random)
+  const baseSeed = Math.round(prediction.currentPrice * 1000);
 
   return (
     <Card>
@@ -37,8 +40,9 @@ export function ModelAgreementChart({ prediction }: ModelAgreementChartProps) {
 
         <div className="h-px bg-border" />
 
-        {MOCK_MODELS.map((model) => {
-          const variance = (Math.random() - 0.5) * mainWindow.price * 0.04;
+        {MOCK_MODELS.map((model, i) => {
+          const rng = seededRandom(baseSeed + i * 7919);
+          const variance = (rng() - 0.5) * mainWindow.price * 0.04;
           const modelPrice = mainWindow.price + variance;
           const diff = ((modelPrice - prediction.currentPrice) / prediction.currentPrice) * 100;
           const isPositive = diff >= 0;
