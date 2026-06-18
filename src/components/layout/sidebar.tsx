@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -54,9 +55,16 @@ const navSections = [
   },
 ];
 
+const ADMIN_EMAILS = ["ayyan.zeeshan@gmail.com"];
+
 export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar } = useAppStore();
+  const { user } = useUser();
+  const email = user?.emailAddresses?.[0]?.emailAddress?.toLowerCase() || "";
+  const isAdmin = ADMIN_EMAILS.includes(email);
+  const tierLabel = isAdmin ? "Enterprise Plan" : "Free Plan";
+  const watchlistLimit = isAdmin ? "Unlimited" : "3/3";
 
   return (
     <aside
@@ -139,8 +147,8 @@ export function Sidebar() {
               A
             </div>
             <div className="flex-1 overflow-hidden">
-              <p className="truncate text-xs font-medium">Free Plan</p>
-              <p className="truncate text-[10px] text-muted">3/3 watchlists</p>
+              <p className="truncate text-xs font-medium">{tierLabel}</p>
+              <p className="truncate text-[10px] text-muted">{watchlistLimit} watchlists</p>
             </div>
           </div>
         </div>
