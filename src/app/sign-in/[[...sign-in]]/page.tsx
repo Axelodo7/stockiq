@@ -13,7 +13,7 @@ export default function SignInPage() {
           StockIQ
         </span>
       </div>
-      <SignIn />
+      <SignIn forceRedirectUrl="/dashboard" />
       <p className="mt-6 text-sm text-muted">
         Don&apos;t have an account?{" "}
         <Link href="/sign-up" className="text-accent hover:underline">

@@ -13,7 +13,7 @@ export default function SignUpPage() {
           StockIQ
         </span>
       </div>
-      <SignUp />
+      <SignUp forceRedirectUrl="/dashboard" />
       <p className="mt-6 text-sm text-muted">
         Already have an account?{" "}
         <Link href="/sign-in" className="text-accent hover:underline">
