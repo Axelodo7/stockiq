@@ -55,7 +55,7 @@ const pricingTiers = [
     period: "forever",
     features: ["3 watchlists", "5 alerts", "1 portfolio", "Basic predictions", "10 tracked tickers"],
     cta: "Get Started",
-    href: "/register",
+    href: "/sign-up",
     highlighted: false,
     color: "text-muted",
   },
@@ -66,7 +66,7 @@ const pricingTiers = [
     period: "/mo",
     features: ["Unlimited watchlists", "Unlimited alerts", "AI analysis", "Advanced charts", "Backtesting", "5 portfolios"],
     cta: "Start Pro Trial",
-    href: "/register",
+    href: "/sign-up",
     highlighted: true,
     color: "text-cyan",
   },
@@ -77,7 +77,7 @@ const pricingTiers = [
     period: "/mo",
     features: ["ML model training", "Real-time data", "API access", "Risk analytics", "Unlimited portfolios", "Priority support"],
     cta: "Start Elite Trial",
-    href: "/register",
+    href: "/sign-up",
     highlighted: false,
     color: "text-purple",
   },
@@ -88,7 +88,7 @@ const pricingTiers = [
     period: "/mo",
     features: ["Custom reports", "Team access", "SLA guarantee", "Custom integrations", "On-premise", "White-label"],
     cta: "Contact Sales",
-    href: "/register",
+    href: "/sign-up",
     highlighted: false,
     color: "text-amber",
   },
@@ -122,10 +122,7 @@ export default function MarketingHome() {
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button size="lg" asChild>
-                <Link href="/register">Get Started Free</Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <Link href="/dashboard">View Demo</Link>
+                <Link href="/sign-up">Get Started Free</Link>
               </Button>
             </div>
           </div>
@@ -278,7 +275,7 @@ export default function MarketingHome() {
           </p>
           <div className="mt-8">
             <Button size="lg" asChild>
-              <Link href="/register">Start Free Today</Link>
+              <Link href="/sign-up">Start Free Today</Link>
             </Button>
           </div>
         </div>

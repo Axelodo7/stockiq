@@ -22,7 +22,7 @@ const tiers = [
       { text: "Backtesting", included: false },
     ],
     cta: "Get Started",
-    href: "/register",
+    href: "/sign-up",
     highlighted: false,
   },
   {
@@ -44,7 +44,7 @@ const tiers = [
       { text: "Backtesting", included: true },
     ],
     cta: "Start Pro Trial",
-    href: "/register",
+    href: "/sign-up",
     highlighted: true,
   },
   {
@@ -66,7 +66,7 @@ const tiers = [
       { text: "Priority support", included: true },
     ],
     cta: "Start Elite Trial",
-    href: "/register",
+    href: "/sign-up",
     highlighted: false,
   },
   {
@@ -88,7 +88,7 @@ const tiers = [
       { text: "White-label option", included: true },
     ],
     cta: "Contact Sales",
-    href: "/register",
+    href: "/sign-up",
     highlighted: false,
   },
 ];
