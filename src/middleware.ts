@@ -16,7 +16,7 @@ const CSP_DIRECTIVES = [
   "frame-src 'self' https://js.clerk.dev https://*.clerk.accounts.dev https://challenges.cloudflare.com",
   "object-src 'none'",
   "base-uri 'self'",
-  "form-action 'self'",
+  "form-action 'self' https://*.clerk.accounts.dev https://*.clerk.dev",
   "frame-ancestors 'none'",
 ].join("; ");
 
