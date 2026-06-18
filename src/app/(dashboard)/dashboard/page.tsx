@@ -1,0 +1,265 @@
+"use client";
+
+import Link from "next/link";
+import {
+  TrendingUp,
+  TrendingDown,
+  Brain,
+  Bell,
+  Briefcase,
+  Star,
+  ArrowRight,
+  BarChart3,
+  Zap,
+} from "lucide-react";
+import { GlassCard } from "@/components/ui/glass-card";
+import { MetricGlass } from "@/components/ui/metric-glass";
+import { GlowBadge } from "@/components/ui/glow-badge";
+import { MiniSparkline } from "@/components/charts/mini-sparkline";
+import { HeatmapGrid } from "@/components/charts/heatmap-grid";
+import { formatCurrency, formatPercent } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+
+const indices = [
+  { ticker: "SPX", name: "S&P 500", value: 5842.31, change: 0.67 },
+  { ticker: "IXIC", name: "NASDAQ", value: 18439.17, change: 1.12 },
+  { ticker: "DJI", name: "Dow Jones", value: 43127.58, change: 0.34 },
+  { ticker: "VIX", name: "VIX", value: 14.23, change: -5.21 },
+];
+
+const stocks = [
+  { ticker: "AAPL", name: "Apple Inc.", price: 214.29, change: 1.82, changePercent: 0.86, sector: "Technology" },
+  { ticker: "GOOGL", name: "Alphabet Inc.", price: 176.44, change: -2.31, changePercent: -1.29, sector: "Technology" },
+  { ticker: "MSFT", name: "Microsoft Corp.", price: 450.37, change: 5.63, changePercent: 1.27, sector: "Technology" },
+  { ticker: "AMZN", name: "Amazon.com Inc.", price: 219.39, change: -0.87, changePercent: -0.39, sector: "E-Commerce" },
+  { ticker: "TSLA", name: "Tesla Inc.", price: 322.56, change: 12.44, changePercent: 4.02, sector: "Automotive" },
+  { ticker: "NVDA", name: "NVIDIA Corp.", price: 143.71, change: 3.28, changePercent: 2.34, sector: "Technology" },
+];
+
+const predictions = [
+  { ticker: "AAPL", direction: "bullish" as const, confidence: 0.78, price: 221.50, timeframe: "7D" },
+  { ticker: "TSLA", direction: "bullish" as const, confidence: 0.65, price: 340.20, timeframe: "7D" },
+  { ticker: "GOOGL", direction: "bearish" as const, confidence: 0.62, price: 170.80, timeframe: "7D" },
+  { ticker: "NVDA", direction: "bullish" as const, confidence: 0.82, price: 152.40, timeframe: "7D" },
+];
+
+const heatmapItems = stocks.map((s) => ({ ticker: s.ticker, changePercent: s.changePercent }));
+
+const alerts = [
+  { ticker: "TSLA", message: "Hit $320 target", time: "2m ago", type: "price" },
+  { ticker: "AAPL", message: "Prediction updated: Bullish", time: "15m ago", type: "prediction" },
+  { ticker: "NVDA", message: "Volume spike detected", time: "1h ago", type: "volume" },
+];
+
+const recentActivity = [
+  { icon: Brain, label: "AAPL prediction generated", time: "5m ago", color: "text-cyan" },
+  { icon: Bell, label: "TSLA price alert triggered", time: "12m ago", color: "text-amber" },
+  { icon: Briefcase, label: "Portfolio rebalanced", time: "2h ago", color: "text-purple" },
+  { icon: BarChart3, label: "XGBoost model trained", time: "4h ago", color: "text-green" },
+];
+
+function generateSparkData(base: number, positive: boolean): number[] {
+  const data: number[] = [];
+  let value = base * 0.98;
+  for (let i = 0; i < 20; i++) {
+    value += (Math.random() - 0.48) * (base * 0.008);
+    data.push(Math.round(value * 100) / 100);
+  }
+  return data;
+}
+
+export default function DashboardPage() {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight">
+            <span className="gradient-text">Dashboard</span>
+          </h1>
+          <p className="mt-1 text-sm text-muted">Market overview and portfolio insights</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <GlowBadge variant="success" glow>Market Open</GlowBadge>
+          <span className="text-[10px] text-muted">NYSE 9:30 AM ET</span>
+        </div>
+      </div>
+
+      {/* Index Tickers */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {indices.map((idx) => (
+          <GlassCard key={idx.ticker} padding="sm" hover>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-medium uppercase text-muted">{idx.ticker}</p>
+                <p className="font-mono text-lg font-bold">{idx.value.toLocaleString()}</p>
+              </div>
+              <span
+                className={cn(
+                  "font-mono text-xs font-bold",
+                  idx.change >= 0 ? "text-positive" : "text-negative"
+                )}
+              >
+                {idx.change >= 0 ? "+" : ""}
+                {idx.change.toFixed(2)}%
+              </span>
+            </div>
+          </GlassCard>
+        ))}
+      </div>
+
+      {/* Portfolio Metrics */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <MetricGlass label="Portfolio Value" value="$124,847" change={2.34} prefix="$" />
+        <MetricGlass label="Daily P&L" value="+$2,891" change={2.36} />
+        <MetricGlass label="Active Alerts" value="7" />
+        <MetricGlass label="Watchlist" value="12" />
+      </div>
+
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Watchlist Hub — 2 cols */}
+        <GlassCard className="lg:col-span-2" padding="none">
+          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 text-accent" />
+              <h2 className="font-display text-sm font-semibold">Watchlist</h2>
+            </div>
+            <Link href="/watchlist" className="flex items-center gap-1 text-[10px] text-muted hover:text-foreground">
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="divide-y divide-white/[0.04]">
+            {stocks.map((stock) => (
+              <Link
+                key={stock.ticker}
+                href={`/stock/${stock.ticker}`}
+                className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-white/[0.02]"
+              >
+                <div className="w-20">
+                  <p className="font-mono text-xs font-bold">{stock.ticker}</p>
+                  <p className="text-[10px] text-muted">{stock.sector}</p>
+                </div>
+                <div className="flex-1">
+                  <MiniSparkline
+                    data={generateSparkData(stock.price, stock.change >= 0)}
+                    positive={stock.change >= 0}
+                    width={100}
+                    height={28}
+                  />
+                </div>
+                <div className="text-right">
+                  <p className="font-mono text-sm font-bold">{formatCurrency(stock.price)}</p>
+                  <p
+                    className={cn(
+                      "font-mono text-[10px] font-bold",
+                      stock.change >= 0 ? "text-positive" : "text-negative"
+                    )}
+                  >
+                    {stock.change >= 0 ? "+" : ""}
+                    {stock.change.toFixed(2)} ({formatPercent(stock.changePercent)})
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </GlassCard>
+
+        {/* AI Predictions */}
+        <GlassCard padding="none">
+          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Brain className="h-4 w-4 text-cyan" />
+              <h2 className="font-display text-sm font-semibold">AI Predictions</h2>
+            </div>
+            <Link href="/predictions" className="flex items-center gap-1 text-[10px] text-muted hover:text-foreground">
+              All <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="divide-y divide-white/[0.04]">
+            {predictions.map((pred) => (
+              <div key={pred.ticker} className="px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold">{pred.ticker}</span>
+                  <GlowBadge
+                    variant={pred.direction === "bullish" ? "success" : "danger"}
+                    glow
+                  >
+                    {pred.direction}
+                  </GlowBadge>
+                </div>
+                <div className="mt-1 flex items-center justify-between">
+                  <span className="text-[10px] text-muted">{pred.timeframe} target</span>
+                  <span className="font-mono text-xs font-bold">
+                    {formatCurrency(pred.price)}
+                  </span>
+                </div>
+                <div className="mt-1.5 h-1 w-full rounded-full bg-white/[0.05]">
+                  <div
+                    className={cn(
+                      "h-1 rounded-full",
+                      pred.direction === "bullish" ? "bg-positive" : "bg-negative"
+                    )}
+                    style={{ width: `${pred.confidence * 100}%` }}
+                  />
+                </div>
+                <p className="mt-0.5 text-right text-[9px] text-muted">
+                  {Math.round(pred.confidence * 100)}% confidence
+                </p>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* Heatmap + Activity */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Heatmap */}
+        <GlassCard className="lg:col-span-2">
+          <div className="mb-3 flex items-center gap-2">
+            <Zap className="h-4 w-4 text-amber" />
+            <h2 className="font-display text-sm font-semibold">Market Heatmap</h2>
+          </div>
+          <HeatmapGrid items={heatmapItems} size="md" onClick={(t) => window.location.href = `/stock/${t}`} />
+        </GlassCard>
+
+        {/* Recent Activity */}
+        <GlassCard padding="none">
+          <div className="border-b border-white/[0.06] px-4 py-3">
+            <h2 className="font-display text-sm font-semibold">Activity</h2>
+          </div>
+          <div className="divide-y divide-white/[0.04]">
+            {recentActivity.map((item, i) => (
+              <div key={i} className="flex items-start gap-3 px-4 py-3">
+                <div className={cn("mt-0.5", item.color)}>
+                  <item.icon className="h-3.5 w-3.5" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs">{item.label}</p>
+                  <p className="text-[10px] text-muted">{item.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* Quick Links */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { href: "/market", label: "Markets", icon: BarChart3, color: "text-cyan" },
+          { href: "/portfolio", label: "Portfolio", icon: Briefcase, color: "text-purple" },
+          { href: "/risk", label: "Risk", icon: TrendingDown, color: "text-amber" },
+          { href: "/earnings", label: "Earnings", icon: Zap, color: "text-green" },
+        ].map((link) => (
+          <Link key={link.href} href={link.href}>
+            <GlassCard hover className="text-center">
+              <link.icon className={cn("mx-auto mb-2 h-5 w-5", link.color)} />
+              <p className="text-xs font-medium">{link.label}</p>
+            </GlassCard>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
