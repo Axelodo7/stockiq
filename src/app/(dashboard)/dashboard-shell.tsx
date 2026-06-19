@@ -2,6 +2,7 @@
 
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
+import { ChatBot } from "@/components/chatbot";
 import { useAppStore } from "@/store/app-store";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       >
         <div className="p-4 sm:p-6">{children}</div>
       </main>
+      <ChatBot />
     </div>
   );
 }
