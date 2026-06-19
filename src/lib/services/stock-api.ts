@@ -1,7 +1,10 @@
 /**
  * Fetch real-time stock quotes from Yahoo Finance via our API route.
  * Falls back to mock data if the API is unavailable.
+ * Also populates the realPriceCache in market-mock.ts so getStockInfo returns correct prices.
  */
+
+import { setRealPrice } from "./market-mock";
 
 export interface RealStockQuote {
   ticker: string;
@@ -88,8 +91,18 @@ export async function fetchStockQuotes(
       if (json.success && json.data) {
         for (const [ticker, quote] of Object.entries(json.data)) {
           if (quote) {
-            result[ticker] = quote as RealStockQuote;
-            cache.set(ticker, { data: quote as RealStockQuote, timestamp: Date.now() });
+            const q = quote as RealStockQuote;
+            result[ticker] = q;
+            cache.set(ticker, { data: q, timestamp: Date.now() });
+            setRealPrice(ticker, {
+              price: q.price,
+              name: q.name,
+              change: q.change,
+              changePercent: q.changePercent,
+              volume: q.volume,
+              high52w: q.week52High,
+              low52w: q.week52Low,
+            });
           }
         }
       }

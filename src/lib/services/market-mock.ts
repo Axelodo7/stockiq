@@ -1,5 +1,17 @@
 /** Shared mock data utilities for generating stock data and price history. */
 
+/** Global real-price cache populated by Yahoo Finance fetches.
+ *  getStockInfo checks this first so every page shows correct prices. */
+const realPriceCache = new Map<string, { price: number; name?: string; change?: number; changePercent?: number; volume?: number; high52w?: number; low52w?: number }>();
+
+export function setRealPrice(ticker: string, data: { price: number; name?: string; change?: number; changePercent?: number; volume?: number; high52w?: number; low52w?: number }) {
+  realPriceCache.set(ticker.toUpperCase(), data);
+}
+
+export function getRealPrice(ticker: string) {
+  return realPriceCache.get(ticker.toUpperCase()) ?? null;
+}
+
 export interface StockInfo {
   name: string;
   sector: string;
@@ -621,9 +633,35 @@ const knownNames: Record<string, { name: string; sector: string }> = {
   RIOT: { name: "Riot Platforms", sector: "Technology" },
 };
 
-/** Get stock info for any ticker — uses known data or generates deterministic mock data. */
+/** Get stock info for any ticker — checks real price cache first, then known data, then generates mock. */
 export function getStockInfo(ticker: string): StockInfo {
   const t = ticker.toUpperCase();
+  const cached = realPriceCache.get(t);
+  if (cached && stockData[t]) {
+    return { ...stockData[t], price: cached.price, ...(cached.name ? { name: cached.name } : {}), ...(cached.change != null ? { change: cached.change } : {}), ...(cached.changePercent != null ? { changePercent: cached.changePercent } : {}), ...(cached.volume != null ? { volume: cached.volume } : {}), ...(cached.high52w != null ? { high52w: cached.high52w } : {}), ...(cached.low52w != null ? { low52w: cached.low52w } : {}) };
+  }
+  if (cached) {
+    const known = knownNames[t];
+    return {
+      name: cached.name || known?.name || `${t} Corp.`,
+      sector: known?.sector || "Technology",
+      price: cached.price,
+      change: cached.change ?? 0,
+      changePercent: cached.changePercent ?? 0,
+      marketCap: 0,
+      volume: cached.volume ?? 0,
+      peRatio: 0,
+      eps: 0,
+      dividend: 0,
+      beta: 1,
+      high52w: cached.high52w ?? cached.price * 1.2,
+      low52w: cached.low52w ?? cached.price * 0.8,
+      open: cached.price,
+      high: cached.price,
+      low: cached.price,
+      prevClose: cached.price,
+    };
+  }
   if (stockData[t]) return stockData[t];
 
   const rand = seededRandom(hashStr(t));
