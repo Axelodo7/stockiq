@@ -72,46 +72,73 @@ class MarketDataService {
     const cached = cache.get<OHLCV[]>(cacheKey);
     if (cached) return cached;
 
-    if (!this.alphaKey) return this.getMockHistoricalData(ticker, range);
+    // Try Alpha Vantage first
+    if (this.alphaKey) {
+      try {
+        const functionMap: Record<string, string> = {
+          "1M": "TIME_SERIES_MONTHLY",
+          "3M": "TIME_SERIES_MONTHLY",
+          "6M": "TIME_SERIES_MONTHLY",
+          "1Y": "TIME_SERIES_MONTHLY",
+          "5Y": "TIME_SERIES_MONTHLY",
+          MAX: "TIME_SERIES_MONTHLY",
+        };
 
+        const fn = functionMap[range] || "TIME_SERIES_DAILY";
+
+        const res = await this.rateLimitedFetch(
+          `${ALPHA_VANTAGE_BASE}?function=${fn}&symbol=${ticker}&apikey=${this.alphaKey}&outputsize=compact`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const timeSeries = data["Time Series (Monthly)"] || data["Time Series (Daily)"];
+          if (timeSeries) {
+            const ohlcv: OHLCV[] = Object.entries(timeSeries)
+              .map(([date, values]) => {
+                const v = values as Record<string, string>;
+                return {
+                  date,
+                  open: parseFloat(v["1. open"]),
+                  high: parseFloat(v["2. high"]),
+                  low: parseFloat(v["3. low"]),
+                  close: parseFloat(v["4. close"]),
+                  volume: parseInt(v["5. volume"]),
+                };
+              })
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+            cache.set(cacheKey, ohlcv, getCacheTtl("HISTORICAL"));
+            return ohlcv;
+          }
+        }
+      } catch {
+        // Fall through to Yahoo Finance
+      }
+    }
+
+    // Try Yahoo Finance for real price
+    const realPrice = await this.fetchYahooPrice(ticker);
+    const basePrice = realPrice ?? getStockInfo(ticker).price;
+    const ohlcv = this.generateMockHistoricalData(ticker, range, basePrice);
+    cache.set(cacheKey, ohlcv, getCacheTtl("HISTORICAL"));
+    return ohlcv;
+  }
+
+  private async fetchYahooPrice(ticker: string): Promise<number | null> {
     try {
-      const functionMap: Record<string, string> = {
-        "1M": "TIME_SERIES_MONTHLY",
-        "3M": "TIME_SERIES_MONTHLY",
-        "6M": "TIME_SERIES_MONTHLY",
-        "1Y": "TIME_SERIES_MONTHLY",
-        "5Y": "TIME_SERIES_MONTHLY",
-        MAX: "TIME_SERIES_MONTHLY",
-      };
-
-      const fn = functionMap[range] || "TIME_SERIES_DAILY";
-
-      const res = await this.rateLimitedFetch(
-        `${ALPHA_VANTAGE_BASE}?function=${fn}&symbol=${ticker}&apikey=${this.alphaKey}&outputsize=compact`
-      );
-      if (!res.ok) return [];
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`;
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) return null;
       const data = await res.json();
-      const timeSeries = data["Time Series (Monthly)"] || data["Time Series (Daily)"];
-      if (!timeSeries) return [];
-
-      const ohlcv: OHLCV[] = Object.entries(timeSeries)
-        .map(([date, values]) => {
-          const v = values as Record<string, string>;
-          return {
-            date,
-            open: parseFloat(v["1. open"]),
-            high: parseFloat(v["2. high"]),
-            low: parseFloat(v["3. low"]),
-            close: parseFloat(v["4. close"]),
-            volume: parseInt(v["5. volume"]),
-          };
-        })
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-      cache.set(cacheKey, ohlcv, getCacheTtl("HISTORICAL"));
-      return ohlcv;
+      const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      return typeof price === "number" && price > 0 ? price : null;
     } catch {
-      return this.getMockHistoricalData(ticker, range);
+      return null;
     }
   }
 
@@ -147,16 +174,10 @@ class MarketDataService {
     }
   }
 
-  private getMockQuote(ticker: string): MarketQuote {
-    const mockPrices: Record<string, number> = {
-      AAPL: 195.89, GOOGL: 175.98, MSFT: 425.22, AMZN: 186.51,
-      TSLA: 177.29, NVDA: 131.88, META: 505.95, JPM: 198.47,
-      V: 279.86, JNJ: 147.06, WMT: 68.46, PG: 162.58,
-      MA: 464.32, UNH: 524.75, HD: 364.72, DIS: 103.52,
-      BAC: 39.14, XOM: 104.48, PFE: 28.38, KO: 62.45,
-    };
-    const price = mockPrices[ticker.toUpperCase()] || 100 + Math.random() * 200;
-    const change = (Math.random() - 0.5) * 10;
+  private async getMockQuote(ticker: string): Promise<MarketQuote> {
+    const realPrice = await this.fetchYahooPrice(ticker);
+    const price = realPrice ?? getStockInfo(ticker).price;
+    const change = realPrice ? 0 : (Math.random() - 0.5) * 10;
     return {
       ticker: ticker.toUpperCase(),
       currentPrice: price,
@@ -171,23 +192,23 @@ class MarketDataService {
     };
   }
 
-  private getMockHistoricalData(ticker: string, range: string): OHLCV[] {
+  private generateMockHistoricalData(ticker: string, range: string, basePrice?: number): OHLCV[] {
     const days = { "1D": 1, "5D": 5, "1M": 30, "3M": 90, "6M": 180, "1Y": 365, "5Y": 1825, MAX: 3650 };
     const numDays = days[range as keyof typeof days] || 365;
     const data: OHLCV[] = [];
-    const basePrice = getStockInfo(ticker).price;
-    let price = basePrice;
+    const price = basePrice ?? getStockInfo(ticker).price;
+    let currentPrice = price;
     const now = new Date();
-    const rng = seededRandom(Math.round(basePrice * 1000) + numDays);
+    const rng = seededRandom(Math.round(price * 1000) + numDays);
 
     for (let i = numDays; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
       if (date.getDay() === 0 || date.getDay() === 6) continue;
 
-      const change = (rng() - 0.48) * price * 0.03;
-      const open = price;
-      const close = price + change;
+      const change = (rng() - 0.48) * currentPrice * 0.03;
+      const open = currentPrice;
+      const close = currentPrice + change;
       const high = Math.max(open, close) + rng() * 3;
       const low = Math.min(open, close) - rng() * 3;
 
@@ -199,14 +220,14 @@ class MarketDataService {
         close: parseFloat(close.toFixed(2)),
         volume: Math.floor(rng() * 50000000),
       });
-      price = close;
+      currentPrice = close;
     }
 
-    // Scale so the last bar ends at basePrice
+    // Scale so the last bar ends at price
     if (data.length > 0) {
       const lastClose = data[data.length - 1].close;
-      if (Math.abs(lastClose - basePrice) > 0.01) {
-        const factor = basePrice / lastClose;
+      if (Math.abs(lastClose - price) > 0.01) {
+        const factor = price / lastClose;
         for (const bar of data) {
           bar.open = parseFloat((bar.open * factor).toFixed(2));
           bar.high = parseFloat((bar.high * factor).toFixed(2));
