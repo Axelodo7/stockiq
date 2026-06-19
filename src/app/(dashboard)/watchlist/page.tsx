@@ -17,6 +17,7 @@ import { GlowBadge } from "@/components/ui/glow-badge";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { MiniSparkline } from "@/components/charts/mini-sparkline";
 import { formatCurrency, formatCompact, formatPercent, cn, seededRandom } from "@/lib/utils";
+import { useStockPrices } from "@/hooks/use-stock-prices";
 
 interface WatchlistStock {
   id: string;
@@ -31,13 +32,15 @@ interface WatchlistStock {
   sector: string;
 }
 
-const watchlistStocks: WatchlistStock[] = [
-  { id: "1", ticker: "AAPL", name: "Apple Inc.", price: 214.29, change: 1.82, changePercent: 0.86, volume: 52_700_000, marketCap: 3.28e12, status: "watching", sector: "Technology" },
-  { id: "2", ticker: "MSFT", name: "Microsoft Corp.", price: 450.37, change: 5.63, changePercent: 1.27, volume: 28_400_000, marketCap: 3.35e12, status: "interested", sector: "Technology" },
-  { id: "3", ticker: "NVDA", name: "NVIDIA Corp.", price: 143.71, change: 3.28, changePercent: 2.34, volume: 89_100_000, marketCap: 3.51e12, status: "watching", sector: "Technology" },
-  { id: "4", ticker: "GOOGL", name: "Alphabet Inc.", price: 176.44, change: -2.31, changePercent: -1.29, volume: 31_800_000, marketCap: 2.17e12, status: "watching", sector: "Technology" },
-  { id: "5", ticker: "TSLA", name: "Tesla Inc.", price: 322.56, change: 12.44, changePercent: 4.02, volume: 118_200_000, marketCap: 1.04e12, status: "pending", sector: "Automotive" },
-  { id: "6", ticker: "AMZN", name: "Amazon.com Inc.", price: 219.39, change: -0.87, changePercent: -0.39, volume: 42_100_000, marketCap: 2.29e12, status: "interested", sector: "E-Commerce" },
+const WATCHLIST_TICKERS = ["AAPL", "MSFT", "NVDA", "GOOGL", "TSLA", "AMZN", "META", "JPM"];
+
+const fallbackStocks: WatchlistStock[] = [
+  { id: "1", ticker: "AAPL", name: "Apple Inc.", price: 298.01, change: 2.06, changePercent: 0.70, volume: 76_700_000, marketCap: 4.62e12, status: "watching", sector: "Technology" },
+  { id: "2", ticker: "MSFT", name: "Microsoft Corp.", price: 379.40, change: 0.49, changePercent: 0.13, volume: 58_466_000, marketCap: 2.82e12, status: "interested", sector: "Technology" },
+  { id: "3", ticker: "NVDA", name: "NVIDIA Corp.", price: 210.69, change: 6.04, changePercent: 2.95, volume: 238_264_000, marketCap: 5.13e12, status: "watching", sector: "Technology" },
+  { id: "4", ticker: "GOOGL", name: "Alphabet Inc.", price: 368.03, change: 4.24, changePercent: 1.17, volume: 44_359_000, marketCap: 2.15e12, status: "watching", sector: "Technology" },
+  { id: "5", ticker: "TSLA", name: "Tesla Inc.", price: 400.49, change: 4.11, changePercent: 1.04, volume: 54_706_000, marketCap: 1.29e12, status: "pending", sector: "Automotive" },
+  { id: "6", ticker: "AMZN", name: "Amazon.com Inc.", price: 220.12, change: -0.87, changePercent: -0.39, volume: 42_100_000, marketCap: 2.32e12, status: "interested", sector: "E-Commerce" },
   { id: "7", ticker: "META", name: "Meta Platforms Inc.", price: 612.77, change: 8.91, changePercent: 1.47, volume: 18_300_000, marketCap: 1.56e12, status: "watching", sector: "Technology" },
   { id: "8", ticker: "JPM", name: "JPMorgan Chase & Co.", price: 267.43, change: -1.24, changePercent: -0.46, volume: 9_800_000, marketCap: 771e9, status: "watching", sector: "Financial" },
 ];
@@ -62,6 +65,22 @@ const statusConfig: Record<string, { label: string; variant: "success" | "warnin
 export default function WatchlistPage() {
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [search, setSearch] = useState("");
+  const { prices } = useStockPrices({ tickers: WATCHLIST_TICKERS });
+
+  const watchlistStocks: WatchlistStock[] = WATCHLIST_TICKERS.map((ticker) => {
+    const q = prices[ticker];
+    const fb = fallbackStocks.find((s) => s.ticker === ticker)!;
+    if (q) {
+      return {
+        ...fb,
+        price: q.price,
+        change: q.change,
+        changePercent: q.changePercent,
+        volume: q.volume || fb.volume,
+      };
+    }
+    return fb;
+  });
 
   const filtered = watchlistStocks.filter(
     (s) =>

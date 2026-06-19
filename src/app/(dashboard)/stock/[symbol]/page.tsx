@@ -37,12 +37,35 @@ import { TrendAnalysisCard } from "@/components/ai/trend-analysis-card";
 import type { FullPrediction, BacktestResult } from "@/types";
 import type { AIAnalysis, TrendAnalysis } from "@/lib/services/python-client";
 import { getStockInfo, generatePriceHistory } from "@/lib/services/market-mock";
+import { useStockPrices } from "@/hooks/use-stock-prices";
 
 export default function StockDetailPage() {
   const params = useParams();
   const symbol = (params.symbol as string).toUpperCase();
-  const stock = useMemo(() => getStockInfo(symbol), [symbol]);
+  const mockStock = useMemo(() => getStockInfo(symbol), [symbol]);
+  const { prices } = useStockPrices({ tickers: [symbol] });
   const displaySymbol = symbol;
+
+  const live = prices[symbol];
+  const stock = useMemo(() => {
+    if (live) {
+      return {
+        ...mockStock,
+        price: live.price,
+        change: live.change,
+        changePercent: live.changePercent,
+        open: live.open || mockStock.open,
+        high: live.dayHigh || mockStock.high,
+        low: live.dayLow || mockStock.low,
+        prevClose: live.previousClose || mockStock.prevClose,
+        volume: live.volume || mockStock.volume,
+        high52w: live.week52High || mockStock.high52w,
+        low52w: live.week52Low || mockStock.low52w,
+      };
+    }
+    return mockStock;
+  }, [live, mockStock]);
+
   const ohlcvData = useMemo(() => generatePriceHistory(stock.price, 4788), [stock.price]);
 
   const [prediction, setPrediction] = useState<FullPrediction | null>(null);

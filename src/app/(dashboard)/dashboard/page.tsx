@@ -22,6 +22,7 @@ import { HeatmapGrid } from "@/components/charts/heatmap-grid";
 import { MarketSummaryCard } from "@/components/ai/market-summary-card";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 import { cn, seededRandom } from "@/lib/utils";
+import { useStockPrices } from "@/hooks/use-stock-prices";
 import type { MarketSummary } from "@/lib/services/python-client";
 
 const indices = [
@@ -31,28 +32,28 @@ const indices = [
   { ticker: "VIX", name: "VIX", value: 14.23, change: -5.21 },
 ];
 
-const stocks = [
-  { ticker: "AAPL", name: "Apple Inc.", price: 214.29, change: 1.82, changePercent: 0.86, sector: "Technology" },
-  { ticker: "GOOGL", name: "Alphabet Inc.", price: 176.44, change: -2.31, changePercent: -1.29, sector: "Technology" },
-  { ticker: "MSFT", name: "Microsoft Corp.", price: 450.37, change: 5.63, changePercent: 1.27, sector: "Technology" },
-  { ticker: "AMZN", name: "Amazon.com Inc.", price: 219.39, change: -0.87, changePercent: -0.39, sector: "E-Commerce" },
-  { ticker: "TSLA", name: "Tesla Inc.", price: 322.56, change: 12.44, changePercent: 4.02, sector: "Automotive" },
-  { ticker: "NVDA", name: "NVIDIA Corp.", price: 143.71, change: 3.28, changePercent: 2.34, sector: "Technology" },
+const DEFAULT_WATCHLIST_TICKERS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"];
+
+const fallbackStocks = [
+  { ticker: "AAPL", name: "Apple Inc.", price: 298.01, change: 2.06, changePercent: 0.70, sector: "Technology" },
+  { ticker: "MSFT", name: "Microsoft Corp.", price: 379.40, change: 0.49, changePercent: 0.13, sector: "Technology" },
+  { ticker: "GOOGL", name: "Alphabet Inc.", price: 368.03, change: 4.24, changePercent: 1.17, sector: "Technology" },
+  { ticker: "AMZN", name: "Amazon.com Inc.", price: 220.12, change: -0.87, changePercent: -0.39, sector: "E-Commerce" },
+  { ticker: "TSLA", name: "Tesla Inc.", price: 400.49, change: 4.11, changePercent: 1.04, sector: "Automotive" },
+  { ticker: "NVDA", name: "NVIDIA Corp.", price: 210.69, change: 6.04, changePercent: 2.95, sector: "Technology" },
 ];
+
+const sectorMap: Record<string, string> = {
+  AAPL: "Technology", MSFT: "Technology", GOOGL: "Technology", AMZN: "E-Commerce",
+  TSLA: "Automotive", NVDA: "Technology", META: "Technology", NFLX: "Entertainment",
+  JPM: "Finance", V: "Finance",
+};
 
 const predictions = [
   { ticker: "AAPL", direction: "bullish" as const, confidence: 0.78, price: 221.50, timeframe: "7D" },
   { ticker: "TSLA", direction: "bullish" as const, confidence: 0.65, price: 340.20, timeframe: "7D" },
   { ticker: "GOOGL", direction: "bearish" as const, confidence: 0.62, price: 170.80, timeframe: "7D" },
   { ticker: "NVDA", direction: "bullish" as const, confidence: 0.82, price: 152.40, timeframe: "7D" },
-];
-
-const heatmapItems = stocks.map((s) => ({ ticker: s.ticker, changePercent: s.changePercent }));
-
-const alerts = [
-  { ticker: "TSLA", message: "Hit $320 target", time: "2m ago", type: "price" },
-  { ticker: "AAPL", message: "Prediction updated: Bullish", time: "15m ago", type: "prediction" },
-  { ticker: "NVDA", message: "Volume spike detected", time: "1h ago", type: "volume" },
 ];
 
 const recentActivity = [
@@ -76,6 +77,7 @@ function generateSparkData(base: number, positive: boolean): number[] {
 export default function DashboardPage() {
   const [marketSummary, setMarketSummary] = useState<MarketSummary | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(true);
+  const { prices, loading: pricesLoading } = useStockPrices({ tickers: DEFAULT_WATCHLIST_TICKERS });
 
   useEffect(() => {
     fetch("/api/ai/market-summary")
@@ -84,6 +86,24 @@ export default function DashboardPage() {
       .catch(() => {})
       .finally(() => setLoadingSummary(false));
   }, []);
+
+  const stocks = DEFAULT_WATCHLIST_TICKERS.map((ticker) => {
+    const q = prices[ticker];
+    const fb = fallbackStocks.find((s) => s.ticker === ticker)!;
+    if (q) {
+      return {
+        ticker,
+        name: q.name || fb.name,
+        price: q.price,
+        change: q.change,
+        changePercent: q.changePercent,
+        sector: sectorMap[ticker] || "Technology",
+      };
+    }
+    return fb;
+  });
+
+  const heatmapItems = stocks.map((s) => ({ ticker: s.ticker, changePercent: s.changePercent }));
 
   return (
     <div className="space-y-6">

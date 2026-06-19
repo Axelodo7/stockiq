@@ -16,6 +16,7 @@ import { HeatmapGrid } from "@/components/charts/heatmap-grid";
 import { SectorMap } from "@/components/charts/sector-map";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 import { cn, seededRandom } from "@/lib/utils";
+import { useStockPrices } from "@/hooks/use-stock-prices";
 
 const indices = [
   { ticker: "SPX", name: "S&P 500", value: 5842.31, change: 0.67, high: 5856.20, low: 5801.44 },
@@ -40,30 +41,28 @@ const sectors = [
   { name: "Consumer Staples", changePercent: -0.14, marketCap: 3900 },
 ];
 
-const stocks = [
-  { ticker: "AAPL", name: "Apple Inc.", price: 214.29, change: 1.82, changePercent: 0.86, sector: "Technology" },
-  { ticker: "GOOGL", name: "Alphabet Inc.", price: 176.44, change: -2.31, changePercent: -1.29, sector: "Technology" },
-  { ticker: "MSFT", name: "Microsoft Corp.", price: 450.37, change: 5.63, changePercent: 1.27, sector: "Technology" },
-  { ticker: "AMZN", name: "Amazon.com Inc.", price: 219.39, change: -0.87, changePercent: -0.39, sector: "E-Commerce" },
-  { ticker: "TSLA", name: "Tesla Inc.", price: 322.56, change: 12.44, changePercent: 4.02, sector: "Automotive" },
-  { ticker: "NVDA", name: "NVIDIA Corp.", price: 143.71, change: 3.28, changePercent: 2.34, sector: "Technology" },
-  { ticker: "META", name: "Meta Platforms", price: 583.41, change: 7.12, changePercent: 1.24, sector: "Technology" },
-  { ticker: "JPM", name: "JPMorgan Chase", price: 248.15, change: -1.56, changePercent: -0.62, sector: "Financial" },
-  { ticker: "V", name: "Visa Inc.", price: 318.72, change: 2.04, changePercent: 0.64, sector: "Financial" },
-  { ticker: "JNJ", name: "Johnson & Johnson", price: 155.83, change: 0.41, changePercent: 0.26, sector: "Healthcare" },
-  { ticker: "WMT", name: "Walmart Inc.", price: 96.47, change: -0.32, changePercent: -0.33, sector: "Consumer Staples" },
-  { ticker: "XOM", name: "Exxon Mobil", price: 108.92, change: -1.84, changePercent: -1.66, sector: "Energy" },
+const STOCK_TICKERS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "JPM", "V", "JNJ", "WMT", "XOM"];
+
+const fallbackStocks = [
+  { ticker: "AAPL", name: "Apple Inc.", price: 298.01, change: 2.06, changePercent: 0.70, sector: "Technology" },
+  { ticker: "MSFT", name: "Microsoft Corp.", price: 379.40, change: 0.49, changePercent: 0.13, sector: "Technology" },
+  { ticker: "GOOGL", name: "Alphabet Inc.", price: 368.03, change: 4.24, changePercent: 1.17, sector: "Technology" },
+  { ticker: "AMZN", name: "Amazon.com Inc.", price: 220.12, change: -0.87, changePercent: -0.39, sector: "E-Commerce" },
+  { ticker: "TSLA", name: "Tesla Inc.", price: 400.49, change: 4.11, changePercent: 1.04, sector: "Automotive" },
+  { ticker: "NVDA", name: "NVIDIA Corp.", price: 210.69, change: 6.04, changePercent: 2.95, sector: "Technology" },
+  { ticker: "META", name: "Meta Platforms", price: 612.77, change: 8.91, changePercent: 1.47, sector: "Technology" },
+  { ticker: "JPM", name: "JPMorgan Chase", price: 267.43, change: -1.24, changePercent: -0.46, sector: "Financial" },
+  { ticker: "V", name: "Visa Inc.", price: 320.15, change: 2.04, changePercent: 0.64, sector: "Financial" },
+  { ticker: "JNJ", name: "Johnson & Johnson", price: 156.30, change: 0.41, changePercent: 0.26, sector: "Healthcare" },
+  { ticker: "WMT", name: "Walmart Inc.", price: 97.12, change: -0.32, changePercent: -0.33, sector: "Consumer Staples" },
+  { ticker: "XOM", name: "Exxon Mobil", price: 109.45, change: -1.84, changePercent: -1.66, sector: "Energy" },
 ];
 
-const gainers = [...stocks].sort((a, b) => b.changePercent - a.changePercent).slice(0, 5);
-const losers = [...stocks].sort((a, b) => a.changePercent - b.changePercent).slice(0, 5);
-const mostActive = [...stocks].sort((a, b) => {
-  const volA = a.price * (seededRandom(a.price * 100)() * 100);
-  const volB = b.price * (seededRandom(b.price * 100)() * 100);
-  return volB - volA;
-}).slice(0, 5);
-
-const heatmapItems = stocks.map((s) => ({ ticker: s.ticker, changePercent: s.changePercent }));
+const sectorMap: Record<string, string> = {
+  AAPL: "Technology", MSFT: "Technology", GOOGL: "Technology", AMZN: "E-Commerce",
+  TSLA: "Automotive", NVDA: "Technology", META: "Technology", NFLX: "Entertainment",
+  JPM: "Financial", V: "Financial", JNJ: "Healthcare", WMT: "Consumer Staples", XOM: "Energy",
+};
 
 function generateSparkData(base: number, positive: boolean): number[] {
   const rng = seededRandom(Math.round(base * 100));
@@ -77,6 +76,34 @@ function generateSparkData(base: number, positive: boolean): number[] {
 }
 
 export default function MarketPage() {
+  const { prices } = useStockPrices({ tickers: STOCK_TICKERS });
+
+  const stocks = STOCK_TICKERS.map((ticker) => {
+    const q = prices[ticker];
+    const fb = fallbackStocks.find((s) => s.ticker === ticker)!;
+    if (q) {
+      return {
+        ticker,
+        name: q.name || fb.name,
+        price: q.price,
+        change: q.change,
+        changePercent: q.changePercent,
+        sector: sectorMap[ticker] || fb.sector,
+      };
+    }
+    return fb;
+  });
+
+  const gainers = [...stocks].sort((a, b) => b.changePercent - a.changePercent).slice(0, 5);
+  const losers = [...stocks].sort((a, b) => a.changePercent - b.changePercent).slice(0, 5);
+  const mostActive = [...stocks].sort((a, b) => {
+    const volA = a.price * (seededRandom(a.price * 100)() * 100);
+    const volB = b.price * (seededRandom(b.price * 100)() * 100);
+    return volB - volA;
+  }).slice(0, 5);
+
+  const heatmapItems = stocks.map((s) => ({ ticker: s.ticker, changePercent: s.changePercent }));
+
   return (
     <div className="space-y-6">
       {/* Header */}
