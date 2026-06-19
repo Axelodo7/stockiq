@@ -135,6 +135,348 @@ export const stockData: Record<string, StockInfo> = {
     low: 206.50,
     prevClose: 204.65,
   },
+  META: {
+    name: "Meta Platforms Inc.",
+    sector: "Technology",
+    price: 612.77,
+    change: 8.91,
+    changePercent: 1.47,
+    marketCap: 1.56e12,
+    volume: 18_300_000,
+    peRatio: 28.5,
+    eps: 21.5,
+    dividend: 0,
+    beta: 1.25,
+    high52w: 650.0,
+    low52w: 420.0,
+    open: 604.0,
+    high: 615.0,
+    low: 602.0,
+    prevClose: 603.86,
+  },
+  JPM: {
+    name: "JPMorgan Chase & Co.",
+    sector: "Financial",
+    price: 267.43,
+    change: -1.24,
+    changePercent: -0.46,
+    marketCap: 771e9,
+    volume: 9_800_000,
+    peRatio: 13.2,
+    eps: 20.26,
+    dividend: 5.0,
+    beta: 1.1,
+    high52w: 296.0,
+    low52w: 190.0,
+    open: 268.7,
+    high: 269.5,
+    low: 265.8,
+    prevClose: 268.67,
+  },
+  CRM: {
+    name: "Salesforce Inc.",
+    sector: "Technology",
+    price: 151.0,
+    change: 2.15,
+    changePercent: 1.44,
+    marketCap: 145e9,
+    volume: 8_500_000,
+    peRatio: 45.0,
+    eps: 3.36,
+    dividend: 0,
+    beta: 1.3,
+    high52w: 185.0,
+    low52w: 120.0,
+    open: 149.0,
+    high: 152.5,
+    low: 148.2,
+    prevClose: 148.85,
+  },
+  NFLX: {
+    name: "Netflix Inc.",
+    sector: "Technology",
+    price: 1180.0,
+    change: 15.2,
+    changePercent: 1.31,
+    marketCap: 510e9,
+    volume: 4_200_000,
+    peRatio: 50.0,
+    eps: 23.6,
+    dividend: 0,
+    beta: 1.4,
+    high52w: 1250.0,
+    low52w: 750.0,
+    open: 1165.0,
+    high: 1185.0,
+    low: 1160.0,
+    prevClose: 1164.8,
+  },
+  AMD: {
+    name: "Advanced Micro Devices",
+    sector: "Technology",
+    price: 165.0,
+    change: 3.8,
+    changePercent: 2.36,
+    marketCap: 266e9,
+    volume: 55_000_000,
+    peRatio: 45.0,
+    eps: 3.67,
+    dividend: 0,
+    beta: 1.7,
+    high52w: 200.0,
+    low52w: 115.0,
+    open: 161.2,
+    high: 166.5,
+    low: 160.0,
+    prevClose: 161.2,
+  },
+  BAC: {
+    name: "Bank of America Corp.",
+    sector: "Financial",
+    price: 45.5,
+    change: -0.32,
+    changePercent: -0.7,
+    marketCap: 340e9,
+    volume: 35_000_000,
+    peRatio: 13.0,
+    eps: 3.5,
+    dividend: 0.92,
+    beta: 1.15,
+    high52w: 52.0,
+    low52w: 33.0,
+    open: 45.8,
+    high: 46.0,
+    low: 45.0,
+    prevClose: 45.82,
+  },
+  KO: {
+    name: "Coca-Cola Co.",
+    sector: "Consumer Staples",
+    price: 62.0,
+    change: 0.15,
+    changePercent: 0.24,
+    marketCap: 268e9,
+    volume: 12_000_000,
+    peRatio: 25.0,
+    eps: 2.48,
+    dividend: 1.94,
+    beta: 0.6,
+    high52w: 70.0,
+    low52w: 55.0,
+    open: 61.8,
+    high: 62.3,
+    low: 61.5,
+    prevClose: 61.85,
+  },
+  V: {
+    name: "Visa Inc.",
+    sector: "Financial",
+    price: 320.15,
+    change: 2.04,
+    changePercent: 0.64,
+    marketCap: 640e9,
+    volume: 7_200_000,
+    peRatio: 31.0,
+    eps: 10.33,
+    dividend: 2.08,
+    beta: 0.95,
+    high52w: 350.0,
+    low52w: 252.0,
+    open: 318.0,
+    high: 321.5,
+    low: 317.0,
+    prevClose: 318.11,
+  },
+  JNJ: {
+    name: "Johnson & Johnson",
+    sector: "Healthcare",
+    price: 156.30,
+    change: 0.41,
+    changePercent: 0.26,
+    marketCap: 377e9,
+    volume: 7_500_000,
+    peRatio: 16.0,
+    eps: 9.77,
+    dividend: 4.96,
+    beta: 0.55,
+    high52w: 168.0,
+    low52w: 140.0,
+    open: 155.8,
+    high: 157.0,
+    low: 155.0,
+    prevClose: 155.89,
+  },
+  WMT: {
+    name: "Walmart Inc.",
+    sector: "Consumer Staples",
+    price: 97.12,
+    change: -0.32,
+    changePercent: -0.33,
+    marketCap: 783e9,
+    volume: 15_000_000,
+    peRatio: 38.0,
+    eps: 2.56,
+    dividend: 0.83,
+    beta: 0.5,
+    high52w: 105.0,
+    low52w: 65.0,
+    open: 97.4,
+    high: 97.8,
+    low: 96.5,
+    prevClose: 97.44,
+  },
+  XOM: {
+    name: "Exxon Mobil Corp.",
+    sector: "Energy",
+    price: 109.45,
+    change: -1.84,
+    changePercent: -1.66,
+    marketCap: 460e9,
+    volume: 14_000_000,
+    peRatio: 14.0,
+    eps: 7.82,
+    dividend: 3.8,
+    beta: 0.85,
+    high52w: 125.0,
+    low52w: 95.0,
+    open: 111.2,
+    high: 111.8,
+    low: 108.5,
+    prevClose: 111.29,
+  },
+  UNH: {
+    name: "UnitedHealth Group",
+    sector: "Healthcare",
+    price: 310.0,
+    change: -4.5,
+    changePercent: -1.43,
+    marketCap: 282e9,
+    volume: 5_000_000,
+    peRatio: 18.0,
+    eps: 17.22,
+    dividend: 7.52,
+    beta: 0.7,
+    high52w: 400.0,
+    low52w: 280.0,
+    open: 314.0,
+    high: 315.0,
+    low: 308.0,
+    prevClose: 314.5,
+  },
+  HD: {
+    name: "Home Depot Inc.",
+    sector: "Consumer Disc.",
+    price: 380.0,
+    change: 5.2,
+    changePercent: 1.39,
+    marketCap: 378e9,
+    volume: 4_500_000,
+    peRatio: 26.0,
+    eps: 14.62,
+    dividend: 9.0,
+    beta: 1.05,
+    high52w: 420.0,
+    low52w: 300.0,
+    open: 375.0,
+    high: 382.0,
+    low: 374.0,
+    prevClose: 374.8,
+  },
+  COST: {
+    name: "Costco Wholesale",
+    sector: "Consumer Staples",
+    price: 960.0,
+    change: 12.0,
+    changePercent: 1.27,
+    marketCap: 426e9,
+    volume: 2_000_000,
+    peRatio: 52.0,
+    eps: 18.46,
+    dividend: 4.64,
+    beta: 0.75,
+    high52w: 1050.0,
+    low52w: 700.0,
+    open: 948.0,
+    high: 965.0,
+    low: 945.0,
+    prevClose: 948.0,
+  },
+  ABBV: {
+    name: "AbbVie Inc.",
+    sector: "Healthcare",
+    price: 195.0,
+    change: 1.8,
+    changePercent: 0.93,
+    marketCap: 345e9,
+    volume: 6_000_000,
+    peRatio: 16.0,
+    eps: 12.19,
+    dividend: 6.56,
+    beta: 0.65,
+    high52w: 210.0,
+    low52w: 155.0,
+    open: 193.2,
+    high: 196.0,
+    low: 192.5,
+    prevClose: 193.2,
+  },
+  PG: {
+    name: "Procter & Gamble",
+    sector: "Consumer Staples",
+    price: 168.0,
+    change: 0.5,
+    changePercent: 0.3,
+    marketCap: 395e9,
+    volume: 6_500_000,
+    peRatio: 27.0,
+    eps: 6.22,
+    dividend: 4.0,
+    beta: 0.45,
+    high52w: 180.0,
+    low52w: 150.0,
+    open: 167.5,
+    high: 169.0,
+    low: 167.0,
+    prevClose: 167.5,
+  },
+  MA: {
+    name: "Mastercard Inc.",
+    sector: "Financial",
+    price: 530.0,
+    change: 4.5,
+    changePercent: 0.86,
+    marketCap: 490e9,
+    volume: 3_500_000,
+    peRatio: 37.0,
+    eps: 14.32,
+    dividend: 2.36,
+    beta: 1.1,
+    high52w: 570.0,
+    low52w: 400.0,
+    open: 525.5,
+    high: 532.0,
+    low: 524.0,
+    prevClose: 525.5,
+  },
+  LLY: {
+    name: "Eli Lilly and Co.",
+    sector: "Healthcare",
+    price: 850.0,
+    change: 15.0,
+    changePercent: 1.8,
+    marketCap: 807e9,
+    volume: 3_000_000,
+    peRatio: 110.0,
+    eps: 7.73,
+    dividend: 1.62,
+    beta: 0.4,
+    high52w: 970.0,
+    low52w: 700.0,
+    open: 835.0,
+    high: 855.0,
+    low: 832.0,
+    prevClose: 835.0,
+  },
 };
 
 /** Simple string hash for deterministic pseudo-random data per ticker. */
@@ -322,7 +664,8 @@ export interface OHLCVBar {
   volume: number;
 }
 
-/** Generate full OHLCV price history with realistic candle structures. */
+/** Generate full OHLCV price history with realistic candle structures.
+ *  Always ends with close === base. Uses seeded PRNG for determinism. */
 export function generatePriceHistory(
   base: number,
   days = 4788
@@ -330,17 +673,18 @@ export function generatePriceHistory(
   const data: OHLCVBar[] = [];
   let value = base * 0.85;
   const now = new Date();
+  const rng = seededRandom(Math.round(base * 1000) + days);
 
   for (let i = days; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
     if (d.getDay() === 0 || d.getDay() === 6) continue;
 
-    const change = (Math.random() - 0.48) * value * 0.025;
+    const change = (rng() - 0.48) * value * 0.025;
     const open = value;
     const close = value + change;
-    const high = Math.max(open, close) + Math.random() * value * 0.008;
-    const low = Math.min(open, close) - Math.random() * value * 0.008;
+    const high = Math.max(open, close) + rng() * value * 0.008;
+    const low = Math.min(open, close) - rng() * value * 0.008;
 
     data.push({
       date: d.toISOString().split("T")[0],
@@ -348,15 +692,31 @@ export function generatePriceHistory(
       high: parseFloat(high.toFixed(2)),
       low: parseFloat(low.toFixed(2)),
       close: parseFloat(close.toFixed(2)),
-      volume: Math.floor(Math.random() * 50_000_000 + 10_000_000),
+      volume: Math.floor(rng() * 50_000_000 + 10_000_000),
     });
 
     value = close;
   }
+
+  // Scale the entire history so the last bar ends exactly at base
+  if (data.length > 0) {
+    const lastClose = data[data.length - 1].close;
+    if (Math.abs(lastClose - base) > 0.01) {
+      const factor = base / lastClose;
+      for (const bar of data) {
+        bar.open = parseFloat((bar.open * factor).toFixed(2));
+        bar.high = parseFloat((bar.high * factor).toFixed(2));
+        bar.low = parseFloat((bar.low * factor).toFixed(2));
+        bar.close = parseFloat((bar.close * factor).toFixed(2));
+      }
+    }
+  }
+
   return data;
 }
 
-/** Simple price history for UI display (close + volume only). */
+/** Simple price history for UI display (close + volume only).
+ *  Always ends close to base. Uses seeded PRNG. */
 export function generateSimplePriceHistory(
   base: number,
   days = 90
@@ -364,15 +724,26 @@ export function generateSimplePriceHistory(
   const data: { date: string; close: number; volume: number }[] = [];
   let value = base * 0.92;
   const now = new Date();
+  const rng = seededRandom(Math.round(base * 1000) + days);
   for (let i = days; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
-    value += (Math.random() - 0.45) * (base * 0.012);
+    value += (rng() - 0.45) * (base * 0.012);
     data.push({
       date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
       close: Math.round(value * 100) / 100,
-      volume: Math.floor(Math.random() * 60_000_000 + 20_000_000),
+      volume: Math.floor(rng() * 60_000_000 + 20_000_000),
     });
+  }
+  // Scale to end at base
+  if (data.length > 0) {
+    const last = data[data.length - 1].close;
+    if (Math.abs(last - base) > 0.01) {
+      const factor = base / last;
+      for (const pt of data) {
+        pt.close = parseFloat((pt.close * factor).toFixed(2));
+      }
+    }
   }
   return data;
 }

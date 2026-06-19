@@ -1,7 +1,8 @@
 import type { MarketQuote, OHLCV, Stock } from "@/types";
 import { cache, buildCacheKey, getCacheTtl } from "./cache";
 import { CACHE_TTL } from "@/lib/constants";
-import { sleep } from "@/lib/utils";
+import { sleep, seededRandom } from "@/lib/utils";
+import { getStockInfo } from "./market-mock";
 
 const FINNHUB_BASE = "https://finnhub.io/api/v1";
 const ALPHA_VANTAGE_BASE = "https://www.alphavantage.co/query";
@@ -174,19 +175,21 @@ class MarketDataService {
     const days = { "1D": 1, "5D": 5, "1M": 30, "3M": 90, "6M": 180, "1Y": 365, "5Y": 1825, MAX: 3650 };
     const numDays = days[range as keyof typeof days] || 365;
     const data: OHLCV[] = [];
-    let price = 100 + Math.random() * 200;
+    const basePrice = getStockInfo(ticker).price;
+    let price = basePrice;
     const now = new Date();
+    const rng = seededRandom(Math.round(basePrice * 1000) + numDays);
 
     for (let i = numDays; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
       if (date.getDay() === 0 || date.getDay() === 6) continue;
 
-      const change = (Math.random() - 0.48) * price * 0.03;
+      const change = (rng() - 0.48) * price * 0.03;
       const open = price;
       const close = price + change;
-      const high = Math.max(open, close) + Math.random() * 3;
-      const low = Math.min(open, close) - Math.random() * 3;
+      const high = Math.max(open, close) + rng() * 3;
+      const low = Math.min(open, close) - rng() * 3;
 
       data.push({
         date: date.toISOString().split("T")[0],
@@ -194,10 +197,25 @@ class MarketDataService {
         high: parseFloat(high.toFixed(2)),
         low: parseFloat(low.toFixed(2)),
         close: parseFloat(close.toFixed(2)),
-        volume: Math.floor(Math.random() * 50000000),
+        volume: Math.floor(rng() * 50000000),
       });
       price = close;
     }
+
+    // Scale so the last bar ends at basePrice
+    if (data.length > 0) {
+      const lastClose = data[data.length - 1].close;
+      if (Math.abs(lastClose - basePrice) > 0.01) {
+        const factor = basePrice / lastClose;
+        for (const bar of data) {
+          bar.open = parseFloat((bar.open * factor).toFixed(2));
+          bar.high = parseFloat((bar.high * factor).toFixed(2));
+          bar.low = parseFloat((bar.low * factor).toFixed(2));
+          bar.close = parseFloat((bar.close * factor).toFixed(2));
+        }
+      }
+    }
+
     return data;
   }
 
