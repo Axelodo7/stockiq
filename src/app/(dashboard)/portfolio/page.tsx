@@ -84,20 +84,20 @@ export default function PortfolioPage() {
           </div>
           <EquityCurveChart
             data={[
-              { date: "Jan", equity: 100000 },
-              { date: "Feb", equity: 105200 },
-              { date: "Mar", equity: 108900 },
-              { date: "Apr", equity: 112400 },
-              { date: "May", equity: 118700 },
-              { date: "Jun", equity: 124847 },
+              { date: "2024-01-01", equity: 100000 },
+              { date: "2024-02-01", equity: 105200 },
+              { date: "2024-03-01", equity: 108900 },
+              { date: "2024-04-01", equity: 112400 },
+              { date: "2024-05-01", equity: 118700 },
+              { date: "2024-06-01", equity: 124847 },
             ]}
             benchmark={[
-              { date: "Jan", value: 100000 },
-              { date: "Feb", value: 102300 },
-              { date: "Mar", value: 104100 },
-              { date: "Apr", value: 106800 },
-              { date: "May", value: 108200 },
-              { date: "Jun", value: 110500 },
+              { date: "2024-01-01", value: 100000 },
+              { date: "2024-02-01", value: 102300 },
+              { date: "2024-03-01", value: 104100 },
+              { date: "2024-04-01", value: 106800 },
+              { date: "2024-05-01", value: 108200 },
+              { date: "2024-06-01", value: 110500 },
             ]}
             height={280}
           />
