@@ -21,6 +21,7 @@ import { MiniSparkline } from "@/components/charts/mini-sparkline";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { formatCurrency, formatPercent, formatCompact, cn, seededRandom } from "@/lib/utils";
 import { getStockInfo, stockData } from "@/lib/services/market-mock";
+import { fetchStockQuotes, type RealStockQuote } from "@/lib/services/stock-api";
 
 interface Position {
   id: string;
@@ -68,11 +69,31 @@ export default function PortfolioPage() {
   const [shares, setShares] = useState("");
   const [avgCost, setAvgCost] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [realPrices, setRealPrices] = useState<Record<string, RealStockQuote>>({});
+  const [previewQuote, setPreviewQuote] = useState<RealStockQuote | null>(null);
 
   useEffect(() => {
     setPositions(loadPositions());
     setMounted(true);
   }, []);
+
+  // Fetch real prices for all position tickers
+  useEffect(() => {
+    if (!mounted || positions.length === 0) return;
+    const tickers = positions.map((p) => p.ticker);
+    fetchStockQuotes(tickers).then(setRealPrices);
+  }, [mounted, positions]);
+
+  // Fetch real price for selected ticker in dialog
+  useEffect(() => {
+    if (!selectedTicker) {
+      setPreviewQuote(null);
+      return;
+    }
+    fetchStockQuotes([selectedTicker]).then((quotes) => {
+      setPreviewQuote(quotes[selectedTicker.toUpperCase()] || null);
+    });
+  }, [selectedTicker]);
 
   const searchUpper = search.toUpperCase().trim();
   const isValidTicker = /^[A-Z]{1,6}$/.test(searchUpper);
@@ -86,7 +107,7 @@ export default function PortfolioPage() {
 
   const showCustomOption = isValidTicker && !isKnownTicker && !selectedTicker && search.length > 0;
 
-  const addPosition = useCallback(() => {
+  const addPosition = useCallback(async () => {
     if (!selectedTicker || !shares || !avgCost) return;
     const numShares = parseFloat(shares);
     const numCost = parseFloat(avgCost);
@@ -104,6 +125,16 @@ export default function PortfolioPage() {
     const updated = [...positions, newPos];
     setPositions(updated);
     savePositions(updated);
+
+    // Fetch real price for the new ticker
+    const quote = await fetchStockQuotes([selectedTicker]);
+    if (quote[selectedTicker.toUpperCase()]) {
+      setRealPrices((prev) => ({
+        ...prev,
+        [selectedTicker.toUpperCase()]: quote[selectedTicker.toUpperCase()],
+      }));
+    }
+
     setDialogOpen(false);
     setSearch("");
     setSelectedTicker(null);
@@ -121,10 +152,13 @@ export default function PortfolioPage() {
   );
 
   const enriched = positions.map((p) => {
-    const info = getStockInfo(p.ticker);
-    const currentPrice = info.price;
+    const realQuote = realPrices[p.ticker];
+    const mockInfo = getStockInfo(p.ticker);
+    const currentPrice = realQuote?.price ?? mockInfo.price;
+    const stockName = realQuote?.name || mockInfo.name;
     return {
       ...p,
+      name: stockName,
       currentPrice,
       totalCost: p.shares * p.avgCost,
       currentValue: p.shares * currentPrice,
@@ -137,7 +171,13 @@ export default function PortfolioPage() {
   const totalCost = enriched.reduce((sum, p) => sum + p.totalCost, 0);
   const totalGainLoss = totalValue - totalCost;
   const totalGainLossPercent = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
-  const dayChange = totalValue * 0.0234;
+  const dayChange = enriched.reduce((sum, p) => {
+    const realQuote = realPrices[p.ticker];
+    if (realQuote) {
+      return sum + p.shares * realQuote.change;
+    }
+    return sum + p.currentValue * 0.0234;
+  }, 0);
 
   if (!mounted) {
     return (
@@ -473,7 +513,7 @@ export default function PortfolioPage() {
                 <div className="mt-1 flex justify-between text-xs">
                   <span className="text-muted">Current Value</span>
                   <span className="font-mono font-bold">
-                    {formatCurrency(parseFloat(shares) * getStockInfo(selectedTicker).price)}
+                    {formatCurrency(parseFloat(shares) * (previewQuote?.price ?? getStockInfo(selectedTicker).price))}
                   </span>
                 </div>
                 {parseFloat(avgCost) > 0 && (
@@ -482,11 +522,11 @@ export default function PortfolioPage() {
                     <span
                       className={cn(
                         "font-mono font-bold",
-                        getStockInfo(selectedTicker).price >= parseFloat(avgCost) ? "text-positive" : "text-negative"
+                        (previewQuote?.price ?? getStockInfo(selectedTicker).price) >= parseFloat(avgCost) ? "text-positive" : "text-negative"
                       )}
                     >
                       {formatPercent(
-                        ((getStockInfo(selectedTicker).price - parseFloat(avgCost)) / parseFloat(avgCost)) * 100
+                        (((previewQuote?.price ?? getStockInfo(selectedTicker).price) - parseFloat(avgCost)) / parseFloat(avgCost)) * 100
                       )}
                     </span>
                   </div>
