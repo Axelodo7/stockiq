@@ -17,59 +17,43 @@ interface YahooQuote {
   week52Low: number;
 }
 
-const YAHOO_URLS = [
-  (t: string) => `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?interval=1d&range=1d`,
-  (t: string) => `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?interval=1d&range=1d`,
-  (t: string) => `https://finance.yahoo.com/quote/${encodeURIComponent(t)}/`,
-];
-
 async function fetchYahooQuote(ticker: string): Promise<YahooQuote | null> {
-  for (const urlFn of YAHOO_URLS) {
+  const endpoints = [
+    `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(ticker)}`,
+    `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(ticker)}`,
+  ];
+
+  for (const url of endpoints) {
     try {
-      const res = await fetch(urlFn(ticker), {
+      const res = await fetch(url, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-          "Accept": "application/json, text/plain, */*",
+          "Accept": "application/json",
         },
-        next: { revalidate: 0 },
+        signal: AbortSignal.timeout(8000),
       });
 
       if (!res.ok) continue;
 
-      const text = await res.text();
-      let data: any;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        continue;
-      }
-
-      const result = data?.chart?.result?.[0];
-      if (!result) continue;
-
-      const meta = result.meta;
-      const price = meta.regularMarketPrice ?? 0;
-      if (!price) continue;
-
-      const previousClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
-      const change = price - previousClose;
-      const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+      const data = await res.json();
+      const quote = data?.quoteResponse?.result?.[0];
+      if (!quote) continue;
 
       return {
-        ticker: meta.symbol || ticker,
-        name: meta.shortName || meta.symbol || ticker,
-        price: Math.round(price * 100) / 100,
-        change: Math.round(change * 100) / 100,
-        changePercent: Math.round(changePercent * 100) / 100,
-        previousClose: Math.round(previousClose * 100) / 100,
-        open: Math.round((meta.regularMarketOpen ?? price) * 100) / 100,
-        dayHigh: Math.round((meta.regularMarketDayHigh ?? price) * 100) / 100,
-        dayLow: Math.round((meta.regularMarketDayLow ?? price) * 100) / 100,
-        volume: meta.regularMarketVolume ?? 0,
-        marketCap: meta.marketCap ?? 0,
-        peRatio: meta.trailingPE ?? 0,
-        week52High: Math.round((meta.fiftyTwoWeekHigh ?? price) * 100) / 100,
-        week52Low: Math.round((meta.fiftyTwoWeekLow ?? price) * 100) / 100,
+        ticker: quote.symbol || ticker,
+        name: quote.shortName || quote.longName || ticker,
+        price: Math.round((quote.regularMarketPrice ?? 0) * 100) / 100,
+        change: Math.round((quote.regularMarketChange ?? 0) * 100) / 100,
+        changePercent: Math.round((quote.regularMarketChangePercent ?? 0) * 100) / 100,
+        previousClose: Math.round((quote.regularMarketPreviousClose ?? 0) * 100) / 100,
+        open: Math.round((quote.regularMarketOpen ?? 0) * 100) / 100,
+        dayHigh: Math.round((quote.regularMarketDayHigh ?? 0) * 100) / 100,
+        dayLow: Math.round((quote.regularMarketDayLow ?? 0) * 100) / 100,
+        volume: quote.regularMarketVolume ?? 0,
+        marketCap: quote.marketCap ?? 0,
+        peRatio: quote.trailingPE ?? 0,
+        week52High: Math.round((quote.fiftyTwoWeekHigh ?? 0) * 100) / 100,
+        week52Low: Math.round((quote.fiftyTwoWeekLow ?? 0) * 100) / 100,
       };
     } catch {
       continue;
