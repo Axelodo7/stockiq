@@ -163,14 +163,14 @@ export default function PortfolioPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-end justify-between gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
             <span className="gradient-text">Portfolio</span>
           </h1>
           <p className="mt-1 text-xs text-muted sm:text-sm">Track your positions and performance</p>
         </div>
-        <GradientButton variant="brand" size="sm" onClick={() => setDialogOpen(true)}>
+        <GradientButton variant="brand" size="sm" className="w-full sm:w-auto" onClick={() => setDialogOpen(true)}>
           <Plus className="h-3.5 w-3.5" />
           Add Position
         </GradientButton>
@@ -261,12 +261,12 @@ export default function PortfolioPage() {
                 <thead>
                   <tr className="border-b border-white/[0.04] text-left text-xs uppercase text-muted">
                     <th className="px-4 py-2 font-medium">Stock</th>
-                    <th className="px-4 py-2 text-right font-medium">Shares</th>
-                    <th className="px-4 py-2 text-right font-medium">Avg Cost</th>
-                    <th className="px-4 py-2 text-right font-medium">Current</th>
-                    <th className="px-4 py-2 text-right font-medium">Value</th>
+                    <th className="hidden px-4 py-2 text-right font-medium sm:table-cell">Shares</th>
+                    <th className="hidden px-4 py-2 text-right font-medium md:table-cell">Avg Cost</th>
+                    <th className="hidden px-4 py-2 text-right font-medium md:table-cell">Current</th>
+                    <th className="hidden px-4 py-2 text-right font-medium lg:table-cell">Value</th>
                     <th className="px-4 py-2 text-right font-medium">Gain/Loss</th>
-                    <th className="px-4 py-2 text-right font-medium">Trend</th>
+                    <th className="hidden px-4 py-2 text-right font-medium sm:table-cell">Trend</th>
                     <th className="px-4 py-2 text-right font-medium"></th>
                   </tr>
                 </thead>
@@ -280,14 +280,14 @@ export default function PortfolioPage() {
                           </div>
                           <div>
                             <p className="font-mono text-xs font-bold">{p.ticker}</p>
-                            <p className="text-[10px] text-muted">{p.name}</p>
+                            <p className="hidden text-[10px] text-muted sm:block">{p.name}</p>
                           </div>
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-right font-mono">{p.shares}</td>
-                      <td className="px-4 py-3 text-right font-mono">{formatCurrency(p.avgCost)}</td>
-                      <td className="px-4 py-3 text-right font-mono font-bold">{formatCurrency(p.currentPrice)}</td>
-                      <td className="px-4 py-3 text-right font-mono font-bold">{formatCurrency(p.currentValue)}</td>
+                      <td className="hidden px-4 py-3 text-right font-mono sm:table-cell">{p.shares}</td>
+                      <td className="hidden px-4 py-3 text-right font-mono md:table-cell">{formatCurrency(p.avgCost)}</td>
+                      <td className="hidden px-4 py-3 text-right font-mono font-bold md:table-cell">{formatCurrency(p.currentPrice)}</td>
+                      <td className="hidden px-4 py-3 text-right font-mono font-bold lg:table-cell">{formatCurrency(p.currentValue)}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           {p.gainLoss >= 0 ? (
@@ -306,7 +306,7 @@ export default function PortfolioPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="hidden px-4 py-3 text-right sm:table-cell">
                         <MiniSparkline
                           data={generateSparkData(p.currentPrice, p.gainLoss >= 0)}
                           positive={p.gainLoss >= 0}
@@ -329,17 +329,17 @@ export default function PortfolioPage() {
                 <tfoot>
                   <tr className="border-t border-white/[0.06]">
                     <td className="px-4 py-3 font-bold">Total</td>
-                    <td className="px-4 py-3 text-right font-mono text-muted">—</td>
-                    <td className="px-4 py-3 text-right font-mono text-muted">—</td>
-                    <td className="px-4 py-3 text-right font-mono text-muted">—</td>
-                    <td className="px-4 py-3 text-right font-mono text-sm font-bold">{formatCurrency(totalValue)}</td>
+                    <td className="hidden px-4 py-3 text-right font-mono text-muted sm:table-cell">—</td>
+                    <td className="hidden px-4 py-3 text-right font-mono text-muted md:table-cell">—</td>
+                    <td className="hidden px-4 py-3 text-right font-mono text-muted md:table-cell">—</td>
+                    <td className="hidden px-4 py-3 text-right font-mono text-sm font-bold lg:table-cell">{formatCurrency(totalValue)}</td>
                     <td className="px-4 py-3 text-right">
                       <span className={cn("font-mono text-sm font-bold", totalGainLoss >= 0 ? "text-positive" : "text-negative")}>
                         {totalGainLoss >= 0 ? "+" : ""}
                         {formatCurrency(totalGainLoss)}
                       </span>
                     </td>
-                    <td className="px-4 py-3"></td>
+                    <td className="hidden px-4 py-3 sm:table-cell"></td>
                     <td className="px-4 py-3"></td>
                   </tr>
                 </tfoot>
@@ -351,7 +351,7 @@ export default function PortfolioPage() {
 
       {/* Add Position Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add Position</DialogTitle>
             <DialogDescription>

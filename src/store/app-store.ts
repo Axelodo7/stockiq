@@ -13,7 +13,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       theme: "dark",
-      sidebarOpen: true,
+      sidebarOpen: false,
       setTheme: (theme) => set({ theme }),
       toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
