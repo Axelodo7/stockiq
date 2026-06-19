@@ -3,7 +3,7 @@ import { success, validationError, handleApiError } from "@/lib/api-response";
 import { tickerSchema } from "@/lib/validation/schemas";
 import { perIPLimit } from "@/lib/security/rate-limit";
 import { runBacktest } from "@/lib/services/python-client";
-import { generatePriceHistory, getStockInfo } from "@/lib/services/market-mock";
+import { generatePriceHistory, getStockInfo, fetchRealPriceServer } from "@/lib/services/market-mock";
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for") || "unknown";
@@ -23,8 +23,10 @@ export async function POST(request: NextRequest) {
     const initialCapital = body.initial_capital || 10000;
     const modelType = (body.model_type || "ENSEMBLE") as string;
 
-    const stock = getStockInfo(ticker);
-    const priceHistory = generatePriceHistory(stock.price);
+    const realPrice = await fetchRealPriceServer(ticker);
+    const mockStock = getStockInfo(ticker);
+    const stockPrice = realPrice || mockStock.price || 100;
+    const priceHistory = generatePriceHistory(stockPrice);
 
     const ohlcv = priceHistory.map((d) => ({
       date: d.date,

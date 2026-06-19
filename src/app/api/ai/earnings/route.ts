@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEarningsAnalysis, type EarningsAnalysis } from "@/lib/services/python-client";
-import { generatePriceHistory, getStockInfo } from "@/lib/services/market-mock";
+import { getStockInfo, fetchRealPriceServer } from "@/lib/services/market-mock";
 
-function generateMockEarnings(ticker: string): EarningsAnalysis {
+function generateMockEarnings(ticker: string, realPrice?: number): EarningsAnalysis {
   const stock = getStockInfo(ticker);
+  const price = realPrice || stock.price || 100;
   return {
     ticker,
-    current_price: stock.price,
+    current_price: price,
     earnings_date: "2026-07-02",
     expectations: { surprise_pct: 5.2, beat: true, magnitude: "moderate" },
     price_reaction: 2.4,
@@ -24,8 +25,9 @@ export async function POST(request: NextRequest) {
     if (!ticker || !data) {
       return NextResponse.json({ success: false, error: "ticker and data required" }, { status: 400 });
     }
+    const realPrice = await fetchRealPriceServer(ticker);
     const result = await getEarningsAnalysis(ticker, data, earnings_date, reported_eps, expected_eps, revenue);
-    return NextResponse.json({ success: true, data: result || generateMockEarnings(ticker) });
+    return NextResponse.json({ success: true, data: result || generateMockEarnings(ticker, realPrice || undefined) });
   } catch {
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }

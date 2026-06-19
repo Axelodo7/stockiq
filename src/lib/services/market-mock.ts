@@ -12,6 +12,53 @@ export function getRealPrice(ticker: string) {
   return realPriceCache.get(ticker.toUpperCase()) ?? null;
 }
 
+/** Server-side: fetch real price from Yahoo Finance and cache it. */
+export async function fetchRealPriceServer(ticker: string): Promise<number | null> {
+  const t = ticker.toUpperCase();
+  const cached = realPriceCache.get(t);
+  if (cached && cached.price > 0) return cached.price;
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?interval=1d&range=1d`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    if (typeof price === "number" && price > 0) {
+      const previousClose = data?.chart?.result?.[0]?.meta?.chartPreviousClose ?? price;
+      setRealPrice(t, {
+        price: Math.round(price * 100) / 100,
+        change: Math.round((price - previousClose) * 100) / 100,
+        changePercent: Math.round(((price - previousClose) / previousClose) * 10000) / 100,
+        volume: data?.chart?.result?.[0]?.meta?.regularMarketVolume ?? 0,
+        name: data?.chart?.result?.[0]?.meta?.shortName || undefined,
+      });
+      return Math.round(price * 100) / 100;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+/** Server-side: fetch real prices for multiple tickers. Returns price map. */
+export async function fetchRealPricesServer(tickers: string[]): Promise<Record<string, number>> {
+  const results: Record<string, number> = {};
+  const toFetch = tickers.filter((t) => {
+    const cached = realPriceCache.get(t.toUpperCase());
+    if (cached && cached.price > 0) {
+      results[t.toUpperCase()] = cached.price;
+      return false;
+    }
+    return true;
+  });
+  await Promise.allSettled(toFetch.map(async (t) => {
+    const price = await fetchRealPriceServer(t);
+    if (price) results[t.toUpperCase()] = price;
+  }));
+  return results;
+}
+
 export interface StockInfo {
   name: string;
   sector: string;
@@ -491,15 +538,6 @@ export const stockData: Record<string, StockInfo> = {
   },
 };
 
-/** Simple string hash for deterministic pseudo-random data per ticker. */
-function hashStr(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash);
-}
-
 function seededRandom(seed: number): () => number {
   let s = seed;
   return () => {
@@ -508,6 +546,7 @@ function seededRandom(seed: number): () => number {
   };
 }
 
+/** Known names for displaying correct company names in search/dropdown. */
 const knownNames: Record<string, { name: string; sector: string }> = {
   AAPL: { name: "Apple Inc.", sector: "Technology" },
   MSFT: { name: "Microsoft Corp.", sector: "Technology" },
@@ -664,32 +703,27 @@ export function getStockInfo(ticker: string): StockInfo {
   }
   if (stockData[t]) return stockData[t];
 
-  const rand = seededRandom(hashStr(t));
-  const basePrice = 20 + rand() * 480; // $20 - $500
-  const change = (rand() - 0.45) * basePrice * 0.05;
-  const changePercent = (change / basePrice) * 100;
-  const high52w = basePrice * (1.1 + rand() * 0.4);
-  const low52w = basePrice * (0.5 + rand() * 0.3);
   const known = knownNames[t];
+  const safePrice = 0;
 
   return {
     name: known?.name || `${t} Corp.`,
-    sector: known?.sector || ["Technology", "Healthcare", "Financial", "Energy", "Consumer Disc.", "Industrials", "Communication"][Math.floor(rand() * 7)],
-    price: Math.round(basePrice * 100) / 100,
-    change: Math.round(change * 100) / 100,
-    changePercent: Math.round(changePercent * 100) / 100,
-    marketCap: Math.round((basePrice * (1e9 + rand() * 3e12))),
-    volume: Math.floor(5e6 + rand() * 100e6),
-    peRatio: Math.round((10 + rand() * 50) * 10) / 10,
-    eps: Math.round((basePrice / (10 + rand() * 30)) * 100) / 100,
-    dividend: rand() > 0.4 ? Math.round(rand() * 4 * 100) / 100 : 0,
-    beta: Math.round((0.6 + rand() * 1.8) * 100) / 100,
-    high52w: Math.round(high52w * 100) / 100,
-    low52w: Math.round(low52w * 100) / 100,
-    open: Math.round((basePrice - change * 0.3) * 100) / 100,
-    high: Math.round((basePrice + Math.abs(change) * 0.5) * 100) / 100,
-    low: Math.round((basePrice - Math.abs(change) * 0.5) * 100) / 100,
-    prevClose: Math.round((basePrice - change) * 100) / 100,
+    sector: known?.sector || "Unknown",
+    price: safePrice,
+    change: 0,
+    changePercent: 0,
+    marketCap: 0,
+    volume: 0,
+    peRatio: 0,
+    eps: 0,
+    dividend: 0,
+    beta: 1,
+    high52w: 0,
+    low52w: 0,
+    open: 0,
+    high: 0,
+    low: 0,
+    prevClose: 0,
   };
 }
 
@@ -708,6 +742,7 @@ export function generatePriceHistory(
   base: number,
   days = 4788
 ): OHLCVBar[] {
+  if (!base || base <= 0) return [];
   const data: OHLCVBar[] = [];
   let value = base * 0.85;
   const now = new Date();

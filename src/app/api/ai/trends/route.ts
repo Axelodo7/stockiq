@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTrendAnalysis, type TrendAnalysis } from "@/lib/services/python-client";
-import { generatePriceHistory, getStockInfo } from "@/lib/services/market-mock";
+import { generatePriceHistory, getStockInfo, fetchRealPriceServer } from "@/lib/services/market-mock";
 
-function generateMockTrends(ticker: string): TrendAnalysis {
+function generateMockTrends(ticker: string, realPrice?: number): TrendAnalysis {
   const stock = getStockInfo(ticker);
-  const data = generatePriceHistory(stock.price, 4788);
+  const price = realPrice || stock.price || 100;
+  const data = generatePriceHistory(price, 4788);
   const closes = data.map((d) => d.close);
   const current = closes[closes.length - 1];
   const sma10 = closes.slice(-10).reduce((a, b) => a + b, 0) / 10;
@@ -39,8 +40,9 @@ export async function POST(request: NextRequest) {
     if (!ticker || !data) {
       return NextResponse.json({ success: false, error: "ticker and data required" }, { status: 400 });
     }
+    const realPrice = await fetchRealPriceServer(ticker);
     const result = await getTrendAnalysis(ticker, data);
-    return NextResponse.json({ success: true, data: result || generateMockTrends(ticker) });
+    return NextResponse.json({ success: true, data: result || generateMockTrends(ticker, realPrice || undefined) });
   } catch {
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }

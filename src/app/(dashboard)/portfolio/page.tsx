@@ -165,10 +165,12 @@ export default function PortfolioPage() {
     [positions]
   );
 
+  const hasRealPrices = positions.length > 0 && positions.every((p) => realPrices[p.ticker]);
+
   const enriched = positions.map((p) => {
     const realQuote = realPrices[p.ticker];
     const mockInfo = getStockInfo(p.ticker);
-    const currentPrice = realQuote?.price ?? mockInfo.price;
+    const currentPrice = realQuote?.price || mockInfo.price;
     const stockName = realQuote?.name || mockInfo.name;
     return {
       ...p,
@@ -190,8 +192,13 @@ export default function PortfolioPage() {
     if (realQuote) {
       return sum + p.shares * realQuote.change;
     }
-    return sum + p.currentValue * 0.0234;
+    return sum;
   }, 0);
+
+  const totalValueDisplay = hasRealPrices ? `$${formatCompact(totalValue)}` : "—";
+  const dayChangeDisplay = hasRealPrices ? `${dayChange >= 0 ? "+" : ""}$${formatCompact(dayChange)}` : "—";
+  const dayChangePercent = hasRealPrices && totalValue > 0 ? (dayChange / totalValue) * 100 : 0;
+  const totalReturnDisplay = hasRealPrices ? formatCurrency(totalGainLoss) : "—";
 
   if (!mounted) {
     return (
@@ -271,9 +278,9 @@ export default function PortfolioPage() {
         <>
           {/* Portfolio Metrics */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <MetricGlass label="Total Value" value={`$${formatCompact(totalValue)}`} change={totalGainLossPercent} />
-            <MetricGlass label="Day Change" value={`+$${formatCompact(dayChange)}`} change={2.34} />
-            <MetricGlass label="Total Return" value={formatCurrency(totalGainLoss)} change={totalGainLossPercent} />
+            <MetricGlass label="Total Value" value={totalValueDisplay} change={totalGainLossPercent} />
+            <MetricGlass label="Day Change" value={dayChangeDisplay} change={dayChangePercent} />
+            <MetricGlass label="Total Return" value={totalReturnDisplay} change={totalGainLossPercent} />
             <MetricGlass label="Positions" value={positions.length.toString()} />
           </div>
 
@@ -360,25 +367,33 @@ export default function PortfolioPage() {
                       </td>
                       <td className="hidden px-4 py-3 text-right font-mono sm:table-cell">{p.shares}</td>
                       <td className="hidden px-4 py-3 text-right font-mono md:table-cell">{formatCurrency(p.avgCost)}</td>
-                      <td className="hidden px-4 py-3 text-right font-mono font-bold md:table-cell">{formatCurrency(p.currentPrice)}</td>
-                      <td className="hidden px-4 py-3 text-right font-mono font-bold lg:table-cell">{formatCurrency(p.currentValue)}</td>
+                      <td className="hidden px-4 py-3 text-right font-mono font-bold md:table-cell">
+                        {realPrices[p.ticker] ? formatCurrency(p.currentPrice) : <span className="text-muted animate-pulse">Loading...</span>}
+                      </td>
+                      <td className="hidden px-4 py-3 text-right font-mono font-bold lg:table-cell">
+                        {realPrices[p.ticker] ? formatCurrency(p.currentValue) : <span className="text-muted animate-pulse">Loading...</span>}
+                      </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          {p.gainLoss >= 0 ? (
-                            <TrendingUp className="h-3 w-3 text-positive" />
-                          ) : (
-                            <TrendingDown className="h-3 w-3 text-negative" />
-                          )}
-                          <div>
-                            <p className={cn("font-mono font-bold", p.gainLoss >= 0 ? "text-positive" : "text-negative")}>
-                              {p.gainLoss >= 0 ? "+" : ""}
-                              {formatCurrency(p.gainLoss)}
-                            </p>
-                            <p className={cn("text-[10px] font-mono", p.gainLoss >= 0 ? "text-positive" : "text-negative")}>
-                              {formatPercent(p.gainLossPercent)}
-                            </p>
+                        {realPrices[p.ticker] ? (
+                          <div className="flex items-center justify-end gap-1">
+                            {p.gainLoss >= 0 ? (
+                              <TrendingUp className="h-3 w-3 text-positive" />
+                            ) : (
+                              <TrendingDown className="h-3 w-3 text-negative" />
+                            )}
+                            <div>
+                              <p className={cn("font-mono font-bold", p.gainLoss >= 0 ? "text-positive" : "text-negative")}>
+                                {p.gainLoss >= 0 ? "+" : ""}
+                                {formatCurrency(p.gainLoss)}
+                              </p>
+                              <p className={cn("text-[10px] font-mono", p.gainLoss >= 0 ? "text-positive" : "text-negative")}>
+                                {formatPercent(p.gainLossPercent)}
+                              </p>
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          <span className="text-muted animate-pulse text-xs">Loading...</span>
+                        )}
                       </td>
                       <td className="hidden px-4 py-3 text-right sm:table-cell">
                         <MiniSparkline
@@ -472,7 +487,7 @@ export default function PortfolioPage() {
                             onClick={() => {
                               setSelectedTicker(t);
                               setSearch("");
-                              setAvgCost(info.price.toFixed(2));
+                              setAvgCost(info.price > 0 ? info.price.toFixed(2) : "");
                             }}
                             className="flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.04]"
                           >
@@ -480,17 +495,16 @@ export default function PortfolioPage() {
                               <span className="font-mono font-bold">{t}</span>
                               <span className="ml-2 text-muted">{info.name}</span>
                             </div>
-                            <span className="font-mono text-muted">{formatCurrency(info.price)}</span>
+                            <span className="font-mono text-muted">{info.price > 0 ? formatCurrency(info.price) : "—"}</span>
                           </button>
                         );
                       })}
                       {showCustomOption && (
                         <button
                           onClick={() => {
-                            const info = getStockInfo(searchUpper);
                             setSelectedTicker(searchUpper);
                             setSearch("");
-                            setAvgCost(info.price.toFixed(2));
+                            setAvgCost("");
                           }}
                           className="flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.04] border-t border-white/[0.06]"
                         >
@@ -498,7 +512,7 @@ export default function PortfolioPage() {
                             <span className="font-mono font-bold">{searchUpper}</span>
                             <span className="ml-2 text-accent">Use this ticker</span>
                           </div>
-                          <span className="font-mono text-muted">{formatCurrency(getStockInfo(searchUpper).price)}</span>
+                          <span className="font-mono text-muted">{previewQuote ? formatCurrency(previewQuote.price) : "Loading..."}</span>
                         </button>
                       )}
                     </>
@@ -547,20 +561,20 @@ export default function PortfolioPage() {
                 <div className="mt-1 flex justify-between text-xs">
                   <span className="text-muted">Current Value</span>
                   <span className="font-mono font-bold">
-                    {formatCurrency(parseFloat(shares) * (previewQuote?.price ?? getStockInfo(selectedTicker).price))}
+                    {previewQuote ? formatCurrency(parseFloat(shares) * previewQuote.price) : <span className="text-muted animate-pulse">Loading...</span>}
                   </span>
                 </div>
-                {parseFloat(avgCost) > 0 && (
+                {parseFloat(avgCost) > 0 && previewQuote && (
                   <div className="mt-1 flex justify-between text-xs">
                     <span className="text-muted">Unrealized P/L</span>
                     <span
                       className={cn(
                         "font-mono font-bold",
-                        (previewQuote?.price ?? getStockInfo(selectedTicker).price) >= parseFloat(avgCost) ? "text-positive" : "text-negative"
+                        previewQuote.price >= parseFloat(avgCost) ? "text-positive" : "text-negative"
                       )}
                     >
                       {formatPercent(
-                        (((previewQuote?.price ?? getStockInfo(selectedTicker).price) - parseFloat(avgCost)) / parseFloat(avgCost)) * 100
+                        ((previewQuote.price - parseFloat(avgCost)) / parseFloat(avgCost)) * 100
                       )}
                     </span>
                   </div>

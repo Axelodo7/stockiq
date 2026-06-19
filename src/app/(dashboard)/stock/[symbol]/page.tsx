@@ -66,6 +66,8 @@ export default function StockDetailPage() {
     return mockStock;
   }, [live, mockStock]);
 
+  const isPriceLoading = stock.price === 0;
+
   const ohlcvData = useMemo(() => generatePriceHistory(stock.price, 4788), [stock.price]);
 
   const [prediction, setPrediction] = useState<FullPrediction | null>(null);
@@ -171,6 +173,39 @@ export default function StockDetailPage() {
   const priceRange = stock.high - stock.low;
   const pricePosition = priceRange > 0 ? ((stock.price - stock.low) / priceRange) * 100 : 50;
 
+  if (isPriceLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-start gap-3 sm:items-center sm:gap-4">
+          <Link
+            href="/dashboard"
+            className="rounded-lg p-2 text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
+                <span className="font-mono">{displaySymbol}</span>
+              </h1>
+              <GlowBadge variant="default">{stock.sector}</GlowBadge>
+            </div>
+            <p className="text-xs text-muted sm:text-sm">{stock.name}</p>
+          </div>
+          <div className="text-right ml-auto animate-pulse">
+            <div className="h-8 w-32 rounded bg-white/[0.05] sm:h-10 sm:w-40" />
+          </div>
+        </div>
+        <GlassCard>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Activity className="mb-4 h-10 w-10 text-muted animate-pulse" />
+            <p className="text-sm text-muted">Fetching real-time price for {displaySymbol}...</p>
+          </div>
+        </GlassCard>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -191,23 +226,31 @@ export default function StockDetailPage() {
           <p className="text-xs text-muted sm:text-sm">{stock.name}</p>
         </div>
         <div className="text-right ml-auto">
-          <p className="font-mono text-2xl font-bold sm:text-3xl">{formatCurrency(stock.price)}</p>
-          <div className="flex items-center justify-end gap-1.5 sm:gap-2">
-            {stock.change >= 0 ? (
-              <TrendingUp className="h-3.5 w-3.5 text-positive sm:h-4 sm:w-4" />
-            ) : (
-              <TrendingDown className="h-3.5 w-3.5 text-negative sm:h-4 sm:w-4" />
-            )}
-            <span
-              className={cn(
-                "font-mono text-xs font-bold sm:text-sm",
-                stock.change >= 0 ? "text-positive" : "text-negative"
-              )}
-            >
-              {stock.change >= 0 ? "+" : ""}
-              {stock.change.toFixed(2)} ({stock.changePercent.toFixed(2)}%)
-            </span>
-          </div>
+          {isPriceLoading ? (
+            <div className="animate-pulse">
+              <div className="h-8 w-32 rounded bg-white/[0.05] sm:h-10 sm:w-40 ml-auto" />
+            </div>
+          ) : (
+            <>
+              <p className="font-mono text-2xl font-bold sm:text-3xl">{formatCurrency(stock.price)}</p>
+              <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+                {stock.change >= 0 ? (
+                  <TrendingUp className="h-3.5 w-3.5 text-positive sm:h-4 sm:w-4" />
+                ) : (
+                  <TrendingDown className="h-3.5 w-3.5 text-negative sm:h-4 sm:w-4" />
+                )}
+                <span
+                  className={cn(
+                    "font-mono text-xs font-bold sm:text-sm",
+                    stock.change >= 0 ? "text-positive" : "text-negative"
+                  )}
+                >
+                  {stock.change >= 0 ? "+" : ""}
+                  {stock.change.toFixed(2)} ({stock.changePercent.toFixed(2)}%)
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

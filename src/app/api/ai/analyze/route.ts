@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAIAnalysis, type AIAnalysis } from "@/lib/services/python-client";
-import { generatePriceHistory, getStockInfo } from "@/lib/services/market-mock";
+import { generatePriceHistory, getStockInfo, fetchRealPriceServer } from "@/lib/services/market-mock";
 import { cached, TTL } from "@/lib/server-cache";
 
-function generateMockAnalysis(ticker: string): AIAnalysis {
+function generateMockAnalysis(ticker: string, realPrice?: number): AIAnalysis {
   const stock = getStockInfo(ticker);
-  const data = generatePriceHistory(stock.price, 4788);
+  const price = realPrice || stock.price || 100;
+  const data = generatePriceHistory(price, 4788);
   const closes = data.map((d) => d.close);
   const current = closes[closes.length - 1];
 
@@ -54,11 +55,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const realPrice = await fetchRealPriceServer(ticker);
+
     const result = await cached(
       `ai:analyze:${ticker}`,
       async () => {
         const pythonResult = await getAIAnalysis(ticker, data);
-        return pythonResult || generateMockAnalysis(ticker);
+        return pythonResult || generateMockAnalysis(ticker, realPrice || undefined);
       },
       TTL.MEDIUM
     );

@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { getMarketSummary, type MarketSummary } from "@/lib/services/python-client";
-import { generatePriceHistory, getStockInfo } from "@/lib/services/market-mock";
+import { generatePriceHistory, getStockInfo, fetchRealPriceServer } from "@/lib/services/market-mock";
 
 const TICKERS = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META", "JPM"];
 
-function generateMockMarketSummary(): MarketSummary {
+async function generateMockMarketSummary(): Promise<MarketSummary> {
+  await Promise.allSettled(TICKERS.map((t) => fetchRealPriceServer(t)));
   const stocks = TICKERS.map((t) => {
     const info = getStockInfo(t);
-    return { ticker: t, price: info.price, change_pct: ((info.price - info.prevClose) / info.prevClose) * 100 };
+    return { ticker: t, price: info.price, change_pct: info.prevClose > 0 ? ((info.price - info.prevClose) / info.prevClose) * 100 : 0 };
   });
 
   const avgChange = stocks.reduce((a, s) => a + s.change_pct, 0) / stocks.length;
@@ -41,13 +42,15 @@ function generateMockMarketSummary(): MarketSummary {
 
 export async function GET() {
   try {
+    await Promise.allSettled(TICKERS.map((t) => fetchRealPriceServer(t)));
     const stockData: Record<string, ReturnType<typeof generatePriceHistory>> = {};
     for (const ticker of TICKERS) {
-      stockData[ticker] = generatePriceHistory(getStockInfo(ticker).price, 60);
+      const price = getStockInfo(ticker).price || 100;
+      stockData[ticker] = generatePriceHistory(price, 60);
     }
     const result = await getMarketSummary(stockData);
-    return NextResponse.json({ success: true, data: result || generateMockMarketSummary() });
+    return NextResponse.json({ success: true, data: result || await generateMockMarketSummary() });
   } catch {
-    return NextResponse.json({ success: true, data: generateMockMarketSummary() });
+    return NextResponse.json({ success: true, data: await generateMockMarketSummary() });
   }
 }

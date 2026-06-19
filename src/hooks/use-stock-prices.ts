@@ -37,8 +37,8 @@ export function useStockPrices({
       const result = await fetchStockQuotes(tickers, true);
       setPrices(result);
       setLastUpdated(new Date());
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.error("[useStockPrices] fetch error:", err);
     } finally {
       setLoading(false);
     }

@@ -118,7 +118,9 @@ class MarketDataService {
 
     // Try Yahoo Finance for real price
     const realPrice = await this.fetchYahooPrice(ticker);
-    const basePrice = realPrice ?? getStockInfo(ticker).price;
+    const mockPrice = getStockInfo(ticker).price;
+    const basePrice = realPrice || mockPrice || null;
+    if (!basePrice) return [];
     const ohlcv = this.generateMockHistoricalData(ticker, range, basePrice);
     cache.set(cacheKey, ohlcv, getCacheTtl("HISTORICAL"));
     return ohlcv;
@@ -174,9 +176,11 @@ class MarketDataService {
     }
   }
 
-  private async getMockQuote(ticker: string): Promise<MarketQuote> {
+  private async getMockQuote(ticker: string): Promise<MarketQuote | null> {
     const realPrice = await this.fetchYahooPrice(ticker);
-    const price = realPrice ?? getStockInfo(ticker).price;
+    const mockPrice = getStockInfo(ticker).price;
+    const price = realPrice || mockPrice || 0;
+    if (!price) return null;
     const change = realPrice ? 0 : (Math.random() - 0.5) * 10;
     return {
       ticker: ticker.toUpperCase(),
@@ -196,7 +200,8 @@ class MarketDataService {
     const days = { "1D": 1, "5D": 5, "1M": 30, "3M": 90, "6M": 180, "1Y": 365, "5Y": 1825, MAX: 3650 };
     const numDays = days[range as keyof typeof days] || 365;
     const data: OHLCV[] = [];
-    const price = basePrice ?? getStockInfo(ticker).price;
+    const price = basePrice || getStockInfo(ticker).price;
+    if (!price) return data;
     let currentPrice = price;
     const now = new Date();
     const rng = seededRandom(Math.round(price * 1000) + numDays);

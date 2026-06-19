@@ -105,9 +105,11 @@ export async function fetchStockQuotes(
             });
           }
         }
+      } else {
+        console.error("[fetchStockQuotes] API returned error:", json.error);
       }
-    } catch {
-      // Silently fail
+    } catch (err) {
+      console.error("[fetchStockQuotes] fetch error:", err);
     }
   }
 
