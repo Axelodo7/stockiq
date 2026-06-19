@@ -74,11 +74,17 @@ export default function PortfolioPage() {
     setMounted(true);
   }, []);
 
+  const searchUpper = search.toUpperCase().trim();
+  const isValidTicker = /^[A-Z]{1,6}$/.test(searchUpper);
+  const isKnownTicker = allTickers.includes(searchUpper);
+
   const filteredTickers = allTickers.filter(
     (t) =>
       t.toLowerCase().includes(search.toLowerCase()) ||
       stockData[t].name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const showCustomOption = isValidTicker && !isKnownTicker && !selectedTicker && search.length > 0;
 
   const addPosition = useCallback(() => {
     if (!selectedTicker || !shares || !avgCost) return;
@@ -86,11 +92,11 @@ export default function PortfolioPage() {
     const numCost = parseFloat(avgCost);
     if (isNaN(numShares) || numShares <= 0 || isNaN(numCost) || numCost <= 0) return;
 
-    const info = stockData[selectedTicker];
+    const info = getStockInfo(selectedTicker);
     const newPos: Position = {
       id: Date.now().toString(),
-      ticker: selectedTicker,
-      name: info?.name || selectedTicker,
+      ticker: selectedTicker.toUpperCase(),
+      name: info.name,
       shares: numShares,
       avgCost: numCost,
     };
@@ -380,26 +386,48 @@ export default function PortfolioPage() {
               </div>
               {!selectedTicker && search && (
                 <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-white/[0.06] bg-panel">
-                  {filteredTickers.length === 0 ? (
+                  {filteredTickers.length === 0 && !showCustomOption ? (
                     <div className="px-3 py-2 text-xs text-muted">No results found</div>
                   ) : (
-                    filteredTickers.slice(0, 8).map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => {
-                          setSelectedTicker(t);
-                          setSearch("");
-                          setAvgCost(stockData[t].price.toFixed(2));
-                        }}
-                        className="flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.04]"
-                      >
-                        <div>
-                          <span className="font-mono font-bold">{t}</span>
-                          <span className="ml-2 text-muted">{stockData[t].name}</span>
-                        </div>
-                        <span className="font-mono text-muted">{formatCurrency(stockData[t].price)}</span>
-                      </button>
-                    ))
+                    <>
+                      {filteredTickers.slice(0, 8).map((t) => {
+                        const info = getStockInfo(t);
+                        return (
+                          <button
+                            key={t}
+                            onClick={() => {
+                              setSelectedTicker(t);
+                              setSearch("");
+                              setAvgCost(info.price.toFixed(2));
+                            }}
+                            className="flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.04]"
+                          >
+                            <div>
+                              <span className="font-mono font-bold">{t}</span>
+                              <span className="ml-2 text-muted">{info.name}</span>
+                            </div>
+                            <span className="font-mono text-muted">{formatCurrency(info.price)}</span>
+                          </button>
+                        );
+                      })}
+                      {showCustomOption && (
+                        <button
+                          onClick={() => {
+                            const info = getStockInfo(searchUpper);
+                            setSelectedTicker(searchUpper);
+                            setSearch("");
+                            setAvgCost(info.price.toFixed(2));
+                          }}
+                          className="flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.04] border-t border-white/[0.06]"
+                        >
+                          <div>
+                            <span className="font-mono font-bold">{searchUpper}</span>
+                            <span className="ml-2 text-accent">Use this ticker</span>
+                          </div>
+                          <span className="font-mono text-muted">{formatCurrency(getStockInfo(searchUpper).price)}</span>
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -445,20 +473,20 @@ export default function PortfolioPage() {
                 <div className="mt-1 flex justify-between text-xs">
                   <span className="text-muted">Current Value</span>
                   <span className="font-mono font-bold">
-                    {formatCurrency(parseFloat(shares) * (stockData[selectedTicker]?.price || 0))}
+                    {formatCurrency(parseFloat(shares) * getStockInfo(selectedTicker).price)}
                   </span>
                 </div>
-                {parseFloat(avgCost) > 0 && stockData[selectedTicker] && (
+                {parseFloat(avgCost) > 0 && (
                   <div className="mt-1 flex justify-between text-xs">
                     <span className="text-muted">Unrealized P/L</span>
                     <span
                       className={cn(
                         "font-mono font-bold",
-                        stockData[selectedTicker].price >= parseFloat(avgCost) ? "text-positive" : "text-negative"
+                        getStockInfo(selectedTicker).price >= parseFloat(avgCost) ? "text-positive" : "text-negative"
                       )}
                     >
                       {formatPercent(
-                        ((stockData[selectedTicker].price - parseFloat(avgCost)) / parseFloat(avgCost)) * 100
+                        ((getStockInfo(selectedTicker).price - parseFloat(avgCost)) / parseFloat(avgCost)) * 100
                       )}
                     </span>
                   </div>
