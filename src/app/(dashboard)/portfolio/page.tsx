@@ -10,6 +10,7 @@ import {
   Trash2,
   Search,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { MetricGlass } from "@/components/ui/metric-glass";
@@ -71,18 +72,31 @@ export default function PortfolioPage() {
   const [mounted, setMounted] = useState(false);
   const [realPrices, setRealPrices] = useState<Record<string, RealStockQuote>>({});
   const [previewQuote, setPreviewQuote] = useState<RealStockQuote | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refreshPrices = useCallback(async (force = true) => {
+    if (positions.length === 0) return;
+    setRefreshing(true);
+    const tickers = positions.map((p) => p.ticker);
+    const quotes = await fetchStockQuotes(tickers, force);
+    setRealPrices(quotes);
+    setLastUpdated(new Date());
+    setRefreshing(false);
+  }, [positions]);
 
   useEffect(() => {
     setPositions(loadPositions());
     setMounted(true);
   }, []);
 
-  // Fetch real prices for all position tickers
+  // Initial fetch + auto-refresh every 30 seconds
   useEffect(() => {
     if (!mounted || positions.length === 0) return;
-    const tickers = positions.map((p) => p.ticker);
-    fetchStockQuotes(tickers).then(setRealPrices);
-  }, [mounted, positions]);
+    refreshPrices(true);
+    const interval = setInterval(() => refreshPrices(true), 30_000);
+    return () => clearInterval(interval);
+  }, [mounted, positions, refreshPrices]);
 
   // Fetch real price for selected ticker in dialog
   useEffect(() => {
@@ -208,12 +222,32 @@ export default function PortfolioPage() {
           <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
             <span className="gradient-text">Portfolio</span>
           </h1>
-          <p className="mt-1 text-xs text-muted sm:text-sm">Track your positions and performance</p>
+          <div className="mt-1 flex items-center gap-2 text-xs text-muted sm:text-sm">
+            <span>Track your positions and performance</span>
+            {lastUpdated && (
+              <>
+                <span className="text-white/20">·</span>
+                <span className="text-[10px] text-muted/60">
+                  Live · {lastUpdated.toLocaleTimeString()}
+                </span>
+              </>
+            )}
+          </div>
         </div>
-        <GradientButton variant="brand" size="sm" className="w-full sm:w-auto" onClick={() => setDialogOpen(true)}>
-          <Plus className="h-3.5 w-3.5" />
-          Add Position
-        </GradientButton>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => refreshPrices(true)}
+            disabled={refreshing || positions.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-xs text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground disabled:opacity-50"
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+          <GradientButton variant="brand" size="sm" className="w-full sm:w-auto" onClick={() => setDialogOpen(true)}>
+            <Plus className="h-3.5 w-3.5" />
+            Add Position
+          </GradientButton>
+        </div>
       </div>
 
       {positions.length === 0 ? (

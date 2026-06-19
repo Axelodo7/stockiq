@@ -20,17 +20,26 @@ export interface RealStockQuote {
   week52Low: number;
 }
 
-// In-memory cache with 5-minute TTL
+// In-memory cache with 30-second TTL for live updates
 const cache = new Map<string, { data: RealStockQuote; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 30 * 1000; // 30 seconds
 
-export async function fetchStockQuote(ticker: string): Promise<RealStockQuote | null> {
+export function clearStockCache() {
+  cache.clear();
+}
+
+export async function fetchStockQuote(
+  ticker: string,
+  forceRefresh = false
+): Promise<RealStockQuote | null> {
   const t = ticker.toUpperCase();
 
-  // Check cache
-  const cached = cache.get(t);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.data;
+  // Check cache (skip if force refresh)
+  if (!forceRefresh) {
+    const cached = cache.get(t);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.data;
+    }
   }
 
   try {
@@ -50,22 +59,25 @@ export async function fetchStockQuote(ticker: string): Promise<RealStockQuote | 
 }
 
 export async function fetchStockQuotes(
-  tickers: string[]
+  tickers: string[],
+  forceRefresh = false
 ): Promise<Record<string, RealStockQuote>> {
   const unique = [...new Set(tickers.map((t) => t.toUpperCase()))].filter(Boolean);
   if (unique.length === 0) return {};
 
-  // Check which are cached
+  // Check which are cached (skip if force refresh)
   const result: Record<string, RealStockQuote> = {};
   const toFetch: string[] = [];
 
   for (const t of unique) {
-    const cached = cache.get(t);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      result[t] = cached.data;
-    } else {
-      toFetch.push(t);
+    if (!forceRefresh) {
+      const cached = cache.get(t);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        result[t] = cached.data;
+        continue;
+      }
     }
+    toFetch.push(t);
   }
 
   if (toFetch.length > 0) {
