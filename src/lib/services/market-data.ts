@@ -4,28 +4,86 @@ import { CACHE_TTL } from "@/lib/constants";
 import { sleep, seededRandom } from "@/lib/utils";
 import { getStockInfo } from "./market-mock";
 
-const FINNHUB_BASE = "https://finnhub.io/api/v1";
-const ALPHA_VANTAGE_BASE = "https://www.alphavantage.co/query";
+const ALPACA_KEY = process.env.ALPACA_API_KEY || "";
+const ALPACA_SECRET = process.env.ALPACA_SECRET_KEY || "";
+const ALPACA_DATA_BASE = "https://data.alpaca.markets";
+
+function alpacaHeaders() {
+  return {
+    "APCA-API-KEY-ID": ALPACA_KEY,
+    "APCA-API-SECRET-KEY": ALPACA_SECRET,
+    Accept: "application/json",
+  };
+}
 
 class MarketDataService {
-  private finnhubKey = process.env.FINNHUB_API_KEY || "";
-  private alphaKey = process.env.ALPHA_VANTAGE_API_KEY || "";
   private requestCount = 0;
   private lastReset = Date.now();
 
-  private async rateLimitedFetch(url: string): Promise<Response> {
+  private async rateLimitedFetch(
+    url: string,
+    headers?: Record<string, string>
+  ): Promise<Response> {
     const now = Date.now();
     if (now - this.lastReset > 60_000) {
       this.requestCount = 0;
       this.lastReset = now;
     }
-    if (this.requestCount >= 55) {
+    if (this.requestCount >= 200) {
       await sleep(60_000 - (now - this.lastReset));
       this.requestCount = 0;
       this.lastReset = Date.now();
     }
     this.requestCount++;
-    return fetch(url);
+    return fetch(url, { headers: headers || alpacaHeaders() });
+  }
+
+  private getAlpacaTimeframe(range: string): string {
+    const map: Record<string, string> = {
+      "1D": "1Day",
+      "5D": "1Day",
+      "1M": "1Day",
+      "3M": "1Day",
+      "6M": "1Day",
+      "1Y": "1Day",
+      "5Y": "1Week",
+      MAX: "1Month",
+    };
+    return map[range] || "1Day";
+  }
+
+  private getStartDate(range: string): string {
+    const now = new Date();
+    const d = new Date(now);
+    switch (range) {
+      case "1D":
+        d.setDate(d.getDate() - 1);
+        break;
+      case "5D":
+        d.setDate(d.getDate() - 7);
+        break;
+      case "1M":
+        d.setMonth(d.getMonth() - 1);
+        break;
+      case "3M":
+        d.setMonth(d.getMonth() - 3);
+        break;
+      case "6M":
+        d.setMonth(d.getMonth() - 6);
+        break;
+      case "1Y":
+        d.setFullYear(d.getFullYear() - 1);
+        break;
+      case "5Y":
+        d.setFullYear(d.getFullYear() - 5);
+        break;
+      case "MAX":
+        d.setFullYear(d.getFullYear() - 16);
+        break;
+      default:
+        d.setFullYear(d.getFullYear() - 1);
+    }
+    return d.toISOString().split("T")[0];
   }
 
   async getQuote(ticker: string): Promise<MarketQuote | null> {
@@ -33,28 +91,37 @@ class MarketDataService {
     const cached = cache.get<MarketQuote>(cacheKey);
     if (cached) return cached;
 
-    if (!this.finnhubKey) return this.getMockQuote(ticker);
+    if (!ALPACA_KEY) return this.getMockQuote(ticker);
 
     try {
-      const res = await this.rateLimitedFetch(
-        `${FINNHUB_BASE}/quote?symbol=${ticker}&token=${this.finnhubKey}`
-      );
+      const url = `${ALPACA_DATA_BASE}/v2/stocks/${encodeURIComponent(ticker)}/snapshot`;
+      const res = await this.rateLimitedFetch(url);
       if (!res.ok) return null;
-      const data = await res.json();
 
-      if (data.error) return null;
+      const snap = await res.json();
+      if (!snap?.trade) return null;
+
+      const trade = snap.trade;
+      const dailyBar = snap.dailyBar;
+      const prevDaily = snap.prevDailyBar;
+      const price = trade.p ?? 0;
+      if (!price) return null;
+
+      const previousClose = prevDaily?.c ?? dailyBar?.c ?? price;
+      const change = price - previousClose;
+      const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
 
       const quote: MarketQuote = {
-        ticker,
-        currentPrice: data.c,
-        change: data.d,
-        changePercent: data.dp,
-        open: data.o,
-        high: data.h,
-        low: data.l,
-        volume: data.v,
-        previousClose: data.pc,
-        timestamp: data.t,
+        ticker: ticker.toUpperCase(),
+        currentPrice: Math.round(price * 100) / 100,
+        change: Math.round(change * 100) / 100,
+        changePercent: Math.round(changePercent * 100) / 100,
+        open: Math.round((dailyBar?.o ?? price) * 100) / 100,
+        high: Math.round((dailyBar?.h ?? price) * 100) / 100,
+        low: Math.round((dailyBar?.l ?? price) * 100) / 100,
+        volume: dailyBar?.v ?? 0,
+        previousClose: Math.round(previousClose * 100) / 100,
+        timestamp: Math.floor(Date.now() / 1000),
       };
 
       cache.set(cacheKey, quote, getCacheTtl("QUOTE"));
@@ -72,76 +139,43 @@ class MarketDataService {
     const cached = cache.get<OHLCV[]>(cacheKey);
     if (cached) return cached;
 
-    // Try Alpha Vantage first
-    if (this.alphaKey) {
+    if (ALPACA_KEY) {
       try {
-        const functionMap: Record<string, string> = {
-          "1M": "TIME_SERIES_MONTHLY",
-          "3M": "TIME_SERIES_MONTHLY",
-          "6M": "TIME_SERIES_MONTHLY",
-          "1Y": "TIME_SERIES_MONTHLY",
-          "5Y": "TIME_SERIES_MONTHLY",
-          MAX: "TIME_SERIES_MONTHLY",
-        };
+        const alpacaRange = range.toUpperCase();
+        const timeframe = this.getAlpacaTimeframe(alpacaRange);
+        const start = this.getStartDate(alpacaRange);
 
-        const fn = functionMap[range] || "TIME_SERIES_DAILY";
+        const url = `${ALPACA_DATA_BASE}/v2/stocks/${encodeURIComponent(
+          ticker
+        )}/bars?timeframe=${timeframe}&start=${start}&limit=10000&adjustment=split&feed=iex`;
+        const res = await this.rateLimitedFetch(url);
 
-        const res = await this.rateLimitedFetch(
-          `${ALPHA_VANTAGE_BASE}?function=${fn}&symbol=${ticker}&apikey=${this.alphaKey}&outputsize=compact`
-        );
         if (res.ok) {
           const data = await res.json();
-          const timeSeries = data["Time Series (Monthly)"] || data["Time Series (Daily)"];
-          if (timeSeries) {
-            const ohlcv: OHLCV[] = Object.entries(timeSeries)
-              .map(([date, values]) => {
-                const v = values as Record<string, string>;
-                return {
-                  date,
-                  open: parseFloat(v["1. open"]),
-                  high: parseFloat(v["2. high"]),
-                  low: parseFloat(v["3. low"]),
-                  close: parseFloat(v["4. close"]),
-                  volume: parseInt(v["5. volume"]),
-                };
-              })
-              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          if (data.bars && data.bars.length > 0) {
+            const ohlcv: OHLCV[] = data.bars.map((bar: { t: string; o: number; h: number; l: number; c: number; v: number }) => ({
+              date: bar.t.split("T")[0],
+              open: bar.o,
+              high: bar.h,
+              low: bar.l,
+              close: bar.c,
+              volume: bar.v,
+            }));
 
             cache.set(cacheKey, ohlcv, getCacheTtl("HISTORICAL"));
             return ohlcv;
           }
         }
       } catch {
-        // Fall through to Yahoo Finance
+        // Fall through to mock
       }
     }
 
-    // Try Yahoo Finance for real price
-    const realPrice = await this.fetchYahooPrice(ticker);
     const mockPrice = getStockInfo(ticker).price;
-    const basePrice = realPrice || mockPrice || null;
-    if (!basePrice) return [];
-    const ohlcv = this.generateMockHistoricalData(ticker, range, basePrice);
+    if (!mockPrice) return [];
+    const ohlcv = this.generateMockHistoricalData(ticker, range, mockPrice);
     cache.set(cacheKey, ohlcv, getCacheTtl("HISTORICAL"));
     return ohlcv;
-  }
-
-  private async fetchYahooPrice(ticker: string): Promise<number | null> {
-    try {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`;
-      const res = await fetch(url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-        },
-        signal: AbortSignal.timeout(8000),
-      });
-      if (!res.ok) return null;
-      const data = await res.json();
-      const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
-      return typeof price === "number" && price > 0 ? price : null;
-    } catch {
-      return null;
-    }
   }
 
   async searchStocks(query: string): Promise<Stock[]> {
@@ -149,56 +183,69 @@ class MarketDataService {
     const cached = cache.get<Stock[]>(cacheKey);
     if (cached) return cached;
 
-    if (!this.finnhubKey) return this.getMockStocks(query);
+    if (!ALPACA_KEY) return this.getMockStocks(query);
 
     try {
-      const res = await this.rateLimitedFetch(
-        `${FINNHUB_BASE}/search?q=${query}&token=${this.finnhubKey}`
-      );
-      if (!res.ok) return [];
-      const data = await res.json();
+      const url = `${ALPACA_DATA_BASE}/v1beta1/us/search?symbol=${encodeURIComponent(query)}&limit=20`;
+      const res = await this.rateLimitedFetch(url);
 
-      const stocks: Stock[] = (data.result || [])
-        .slice(0, 20)
-        .map((item: { symbol: string; description: string; type: string }) => ({
-          id: item.symbol,
-          ticker: item.symbol,
-          companyName: item.description,
-          sector: item.type,
-          marketCap: null,
-          exchange: "NASDAQ",
-        }));
+      if (res.ok) {
+        const data = await res.json();
+        const stocks: Stock[] = (data.symbol || [])
+          .slice(0, 20)
+          .map((item: { symbol: string; name?: string; type?: string; exchange?: string }) => ({
+            id: item.symbol,
+            ticker: item.symbol,
+            companyName: item.name || item.symbol,
+            sector: item.type || "Unknown",
+            marketCap: null,
+            exchange: item.exchange || "NASDAQ",
+          }));
 
-      cache.set(cacheKey, stocks, CACHE_TTL.STOCK_LIST);
-      return stocks;
+        cache.set(cacheKey, stocks, CACHE_TTL.STOCK_LIST);
+        return stocks;
+      }
     } catch {
-      return this.getMockStocks(query);
+      // Fall through to mock
     }
+
+    return this.getMockStocks(query);
   }
 
   private async getMockQuote(ticker: string): Promise<MarketQuote | null> {
-    const realPrice = await this.fetchYahooPrice(ticker);
     const mockPrice = getStockInfo(ticker).price;
-    const price = realPrice || mockPrice || 0;
-    if (!price) return null;
-    const change = realPrice ? 0 : (Math.random() - 0.5) * 10;
+    if (!mockPrice) return null;
+    const change = (Math.random() - 0.5) * 10;
     return {
       ticker: ticker.toUpperCase(),
-      currentPrice: price,
+      currentPrice: mockPrice,
       change,
-      changePercent: (change / price) * 100,
-      open: price - (Math.random() - 0.5) * 5,
-      high: price + Math.random() * 5,
-      low: price - Math.random() * 5,
+      changePercent: (change / mockPrice) * 100,
+      open: mockPrice - (Math.random() - 0.5) * 5,
+      high: mockPrice + Math.random() * 5,
+      low: mockPrice - Math.random() * 5,
       volume: Math.floor(Math.random() * 50000000),
-      previousClose: price - change,
+      previousClose: mockPrice - change,
       timestamp: Date.now() / 1000,
     };
   }
 
-  private generateMockHistoricalData(ticker: string, range: string, basePrice?: number): OHLCV[] {
-    const days = { "1D": 1, "5D": 5, "1M": 30, "3M": 90, "6M": 180, "1Y": 365, "5Y": 1825, MAX: 3650 };
-    const numDays = days[range as keyof typeof days] || 365;
+  private generateMockHistoricalData(
+    ticker: string,
+    range: string,
+    basePrice?: number
+  ): OHLCV[] {
+    const days: Record<string, number> = {
+      "1D": 1,
+      "5D": 5,
+      "1M": 30,
+      "3M": 90,
+      "6M": 180,
+      "1Y": 365,
+      "5Y": 1825,
+      MAX: 3650,
+    };
+    const numDays = days[range] || 365;
     const data: OHLCV[] = [];
     const price = basePrice || getStockInfo(ticker).price;
     if (!price) return data;
@@ -228,7 +275,6 @@ class MarketDataService {
       currentPrice = close;
     }
 
-    // Scale so the last bar ends at price
     if (data.length > 0) {
       const lastClose = data[data.length - 1].close;
       if (Math.abs(lastClose - price) > 0.01) {

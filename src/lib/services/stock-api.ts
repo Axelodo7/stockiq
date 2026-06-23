@@ -1,5 +1,5 @@
 /**
- * Fetch real-time stock quotes from Yahoo Finance via our API route.
+ * Fetch real-time stock quotes via our API route (powered by Alpaca Data API).
  * Falls back to mock data if the API is unavailable.
  * Also populates the realPriceCache in market-mock.ts so getStockInfo returns correct prices.
  */
