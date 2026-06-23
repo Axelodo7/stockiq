@@ -91,43 +91,94 @@ class MarketDataService {
     const cached = cache.get<MarketQuote>(cacheKey);
     if (cached) return cached;
 
-    if (!ALPACA_KEY) return this.getMockQuote(ticker);
+    // Try Alpaca first
+    if (ALPACA_KEY) {
+      try {
+        const url = `${ALPACA_DATA_BASE}/v2/stocks/${encodeURIComponent(ticker)}/snapshot`;
+        const res = await this.rateLimitedFetch(url);
+        if (res.ok) {
+          const snap = await res.json();
+          if (snap?.trade) {
+            const trade = snap.trade;
+            const dailyBar = snap.dailyBar;
+            const prevDaily = snap.prevDailyBar;
+            const price = trade.p ?? 0;
+            if (price > 0) {
+              const previousClose = prevDaily?.c ?? dailyBar?.c ?? price;
+              const change = price - previousClose;
+              const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
 
+              const quote: MarketQuote = {
+                ticker: ticker.toUpperCase(),
+                currentPrice: Math.round(price * 100) / 100,
+                change: Math.round(change * 100) / 100,
+                changePercent: Math.round(changePercent * 100) / 100,
+                open: Math.round((dailyBar?.o ?? price) * 100) / 100,
+                high: Math.round((dailyBar?.h ?? price) * 100) / 100,
+                low: Math.round((dailyBar?.l ?? price) * 100) / 100,
+                volume: dailyBar?.v ?? 0,
+                previousClose: Math.round(previousClose * 100) / 100,
+                timestamp: Math.floor(Date.now() / 1000),
+              };
+
+              cache.set(cacheKey, quote, getCacheTtl("QUOTE"));
+              return quote;
+            }
+          }
+        }
+      } catch {
+        // Fall through to Yahoo
+      }
+    }
+
+    // Yahoo Finance fallback
+    const yahooQuote = await this.fetchYahooQuote(ticker);
+    if (yahooQuote) {
+      cache.set(cacheKey, yahooQuote, getCacheTtl("QUOTE"));
+      return yahooQuote;
+    }
+
+    // Final fallback: mock
+    return this.getMockQuote(ticker);
+  }
+
+  private async fetchYahooQuote(ticker: string): Promise<MarketQuote | null> {
     try {
-      const url = `${ALPACA_DATA_BASE}/v2/stocks/${encodeURIComponent(ticker)}/snapshot`;
-      const res = await this.rateLimitedFetch(url);
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`;
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        },
+        signal: AbortSignal.timeout(8000),
+      });
       if (!res.ok) return null;
 
-      const snap = await res.json();
-      if (!snap?.trade) return null;
+      const data = await res.json();
+      const meta = data?.chart?.result?.[0]?.meta;
+      if (!meta) return null;
 
-      const trade = snap.trade;
-      const dailyBar = snap.dailyBar;
-      const prevDaily = snap.prevDailyBar;
-      const price = trade.p ?? 0;
+      const price = meta.regularMarketPrice ?? 0;
       if (!price) return null;
 
-      const previousClose = prevDaily?.c ?? dailyBar?.c ?? price;
+      const previousClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
       const change = price - previousClose;
       const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
 
-      const quote: MarketQuote = {
+      return {
         ticker: ticker.toUpperCase(),
         currentPrice: Math.round(price * 100) / 100,
         change: Math.round(change * 100) / 100,
         changePercent: Math.round(changePercent * 100) / 100,
-        open: Math.round((dailyBar?.o ?? price) * 100) / 100,
-        high: Math.round((dailyBar?.h ?? price) * 100) / 100,
-        low: Math.round((dailyBar?.l ?? price) * 100) / 100,
-        volume: dailyBar?.v ?? 0,
+        open: Math.round((meta.regularMarketOpen ?? price) * 100) / 100,
+        high: Math.round((meta.regularMarketDayHigh ?? price) * 100) / 100,
+        low: Math.round((meta.regularMarketDayLow ?? price) * 100) / 100,
+        volume: meta.regularMarketVolume ?? 0,
         previousClose: Math.round(previousClose * 100) / 100,
         timestamp: Math.floor(Date.now() / 1000),
       };
-
-      cache.set(cacheKey, quote, getCacheTtl("QUOTE"));
-      return quote;
     } catch {
-      return this.getMockQuote(ticker);
+      return null;
     }
   }
 
@@ -139,6 +190,7 @@ class MarketDataService {
     const cached = cache.get<OHLCV[]>(cacheKey);
     if (cached) return cached;
 
+    // Try Alpaca first
     if (ALPACA_KEY) {
       try {
         const alpacaRange = range.toUpperCase();
@@ -153,29 +205,104 @@ class MarketDataService {
         if (res.ok) {
           const data = await res.json();
           if (data.bars && data.bars.length > 0) {
-            const ohlcv: OHLCV[] = data.bars.map((bar: { t: string; o: number; h: number; l: number; c: number; v: number }) => ({
-              date: bar.t.split("T")[0],
-              open: bar.o,
-              high: bar.h,
-              low: bar.l,
-              close: bar.c,
-              volume: bar.v,
-            }));
+            const ohlcv: OHLCV[] = data.bars.map(
+              (bar: { t: string; o: number; h: number; l: number; c: number; v: number }) => ({
+                date: bar.t.split("T")[0],
+                open: bar.o,
+                high: bar.h,
+                low: bar.l,
+                close: bar.c,
+                volume: bar.v,
+              })
+            );
 
             cache.set(cacheKey, ohlcv, getCacheTtl("HISTORICAL"));
             return ohlcv;
           }
         }
       } catch {
-        // Fall through to mock
+        // Fall through to Yahoo
       }
     }
 
+    // Yahoo Finance fallback
+    const yahooData = await this.fetchYahooHistorical(ticker, range);
+    if (yahooData.length > 0) {
+      cache.set(cacheKey, yahooData, getCacheTtl("HISTORICAL"));
+      return yahooData;
+    }
+
+    // Final fallback: mock
     const mockPrice = getStockInfo(ticker).price;
     if (!mockPrice) return [];
     const ohlcv = this.generateMockHistoricalData(ticker, range, mockPrice);
     cache.set(cacheKey, ohlcv, getCacheTtl("HISTORICAL"));
     return ohlcv;
+  }
+
+  private async fetchYahooHistorical(
+    ticker: string,
+    range: string
+  ): Promise<OHLCV[]> {
+    const rangeMap: Record<string, string> = {
+      "1D": "1d",
+      "5D": "5d",
+      "1M": "1mo",
+      "3M": "3mo",
+      "6M": "6mo",
+      "1Y": "1y",
+      "5Y": "5y",
+      MAX: "max",
+    };
+    const yahooRange = rangeMap[range] || "1y";
+
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
+        ticker
+      )}?range=${yahooRange}&interval=1d`;
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        },
+        signal: AbortSignal.timeout(12000),
+      });
+      if (!res.ok) return [];
+
+      const data = await res.json();
+      const result = data?.chart?.result?.[0];
+      if (!result) return [];
+
+      const timestamps = result.timestamp as number[];
+      const ohlcvData = result.indicators?.quote?.[0];
+      if (!timestamps || !ohlcvData) return [];
+
+      const ohlcv: OHLCV[] = [];
+      for (let i = 0; i < timestamps.length; i++) {
+        const o = ohlcvData.open[i];
+        const h = ohlcvData.high[i];
+        const l = ohlcvData.low[i];
+        const c = ohlcvData.close[i];
+        const v = ohlcvData.volume[i];
+        if (o == null || h == null || l == null || c == null) continue;
+
+        const date = new Date(timestamps[i] * 1000)
+          .toISOString()
+          .split("T")[0];
+        ohlcv.push({
+          date,
+          open: o,
+          high: h,
+          low: l,
+          close: c,
+          volume: v ?? 0,
+        });
+      }
+
+      return ohlcv;
+    } catch {
+      return [];
+    }
   }
 
   async searchStocks(query: string): Promise<Stock[]> {

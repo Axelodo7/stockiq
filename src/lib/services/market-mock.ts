@@ -24,38 +24,63 @@ function alpacaHeaders() {
   };
 }
 
-/** Server-side: fetch real price from Alpaca Data API and cache it. */
+/** Server-side: fetch real price via Alpaca, falling back to Yahoo Finance, then cache it. */
 export async function fetchRealPriceServer(ticker: string): Promise<number | null> {
   const t = ticker.toUpperCase();
   const cached = realPriceCache.get(t);
   if (cached && cached.price > 0) return cached.price;
 
-  if (!ALPACA_KEY || !ALPACA_SECRET) return null;
+  // Try Alpaca first
+  if (ALPACA_KEY && ALPACA_SECRET) {
+    try {
+      const url = `${ALPACA_DATA_BASE}/v2/stocks/${encodeURIComponent(t)}/snapshot`;
+      const res = await fetch(url, { headers: alpacaHeaders(), signal: AbortSignal.timeout(8000) });
+      if (res.ok) {
+        const snap = await res.json();
+        if (snap?.trade) {
+          const price = snap.trade.p ?? 0;
+          if (price > 0) {
+            const previousClose = snap.prevDailyBar?.c ?? snap.dailyBar?.c ?? price;
+            setRealPrice(t, {
+              price: Math.round(price * 100) / 100,
+              change: Math.round((price - previousClose) * 100) / 100,
+              changePercent: Math.round(((price - previousClose) / previousClose) * 10000) / 100,
+              volume: snap.dailyBar?.v ?? 0,
+            });
+            return Math.round(price * 100) / 100;
+          }
+        }
+      }
+    } catch { /* fall through to Yahoo */ }
+  }
 
+  // Yahoo Finance fallback
   try {
-    const url = `${ALPACA_DATA_BASE}/v2/stocks/${encodeURIComponent(t)}/snapshot`;
-    const res = await fetch(url, { headers: alpacaHeaders(), signal: AbortSignal.timeout(8000) });
-    if (!res.ok) return null;
-
-    const snap = await res.json();
-    if (!snap?.trade) return null;
-
-    const price = snap.trade.p ?? 0;
-    if (price <= 0) return null;
-
-    const previousClose = snap.prevDailyBar?.c ?? snap.dailyBar?.c ?? price;
-    setRealPrice(t, {
-      price: Math.round(price * 100) / 100,
-      change: Math.round((price - previousClose) * 100) / 100,
-      changePercent: Math.round(((price - previousClose) / previousClose) * 10000) / 100,
-      volume: snap.dailyBar?.v ?? 0,
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?interval=1d&range=1d`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+      signal: AbortSignal.timeout(8000),
     });
-    return Math.round(price * 100) / 100;
+    if (!res.ok) return null;
+    const data = await res.json();
+    const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    if (typeof price === "number" && price > 0) {
+      const previousClose = data?.chart?.result?.[0]?.meta?.chartPreviousClose ?? price;
+      setRealPrice(t, {
+        price: Math.round(price * 100) / 100,
+        change: Math.round((price - previousClose) * 100) / 100,
+        changePercent: Math.round(((price - previousClose) / previousClose) * 10000) / 100,
+        volume: data?.chart?.result?.[0]?.meta?.regularMarketVolume ?? 0,
+        name: data?.chart?.result?.[0]?.meta?.shortName || undefined,
+      });
+      return Math.round(price * 100) / 100;
+    }
   } catch { /* ignore */ }
+
   return null;
 }
 
-/** Server-side: fetch real prices for multiple tickers via Alpaca batch snapshot. Returns price map. */
+/** Server-side: fetch real prices via Alpaca batch, falling back to Yahoo Finance. Returns price map. */
 export async function fetchRealPricesServer(tickers: string[]): Promise<Record<string, number>> {
   const results: Record<string, number> = {};
   const toFetch: string[] = [];
@@ -69,38 +94,54 @@ export async function fetchRealPricesServer(tickers: string[]): Promise<Record<s
     }
   }
 
-  if (toFetch.length === 0 || !ALPACA_KEY || !ALPACA_SECRET) return results;
+  if (toFetch.length === 0) return results;
 
-  try {
-    const symbols = toFetch.join(",");
-    const url = `${ALPACA_DATA_BASE}/v2/stocks/snapshots?symbols=${symbols}`;
-    const res = await fetch(url, { headers: alpacaHeaders(), signal: AbortSignal.timeout(12000) });
+  // Try Alpaca batch snapshot
+  if (ALPACA_KEY && ALPACA_SECRET) {
+    try {
+      const symbols = toFetch.join(",");
+      const url = `${ALPACA_DATA_BASE}/v2/stocks/snapshots?symbols=${symbols}`;
+      const res = await fetch(url, { headers: alpacaHeaders(), signal: AbortSignal.timeout(12000) });
 
-    if (res.ok) {
-      const snapshots = await res.json();
-      for (const [symbol, snap] of Object.entries(snapshots as Record<string, { trade?: { p: number }; dailyBar?: { c: number; v: number }; prevDailyBar?: { c: number } }>)) {
-        if (!snap?.trade) continue;
-        const price = snap.trade.p ?? 0;
-        if (price <= 0) continue;
+      if (res.ok) {
+        const snapshots = await res.json();
+        const stillMissing: string[] = [];
 
-        const previousClose = snap.prevDailyBar?.c ?? snap.dailyBar?.c ?? price;
-        setRealPrice(symbol, {
-          price: Math.round(price * 100) / 100,
-          change: Math.round((price - previousClose) * 100) / 100,
-          changePercent: Math.round(((price - previousClose) / previousClose) * 10000) / 100,
-          volume: snap.dailyBar?.v ?? 0,
-        });
-        results[symbol] = Math.round(price * 100) / 100;
+        for (const symbol of toFetch) {
+          const snap = snapshots[symbol];
+          if (!snap?.trade) { stillMissing.push(symbol); continue; }
+          const price = snap.trade.p ?? 0;
+          if (price <= 0) { stillMissing.push(symbol); continue; }
+
+          const previousClose = snap.prevDailyBar?.c ?? snap.dailyBar?.c ?? price;
+          setRealPrice(symbol, {
+            price: Math.round(price * 100) / 100,
+            change: Math.round((price - previousClose) * 100) / 100,
+            changePercent: Math.round(((price - previousClose) / previousClose) * 10000) / 100,
+            volume: snap.dailyBar?.v ?? 0,
+          });
+          results[symbol] = Math.round(price * 100) / 100;
+        }
+
+        // Yahoo fallback for tickers Alpaca didn't return
+        if (stillMissing.length > 0) {
+          await Promise.allSettled(stillMissing.map(async (t) => {
+            const price = await fetchRealPriceServer(t);
+            if (price) results[t] = price;
+          }));
+        }
+
+        return results;
       }
-      return results;
-    }
-  } catch { /* ignore */ }
+    } catch { /* fall through to Yahoo */ }
+  }
 
-  // Fallback to individual fetches
+  // Yahoo fallback for all missing tickers
   await Promise.allSettled(toFetch.map(async (t) => {
     const price = await fetchRealPriceServer(t);
     if (price) results[t] = price;
   }));
+
   return results;
 }
 
