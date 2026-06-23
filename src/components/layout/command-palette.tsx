@@ -242,16 +242,16 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         onClick={() => onOpenChange(false)}
       />
       <div className="fixed left-1/2 top-[20%] z-50 w-full max-w-lg -translate-x-1/2 animate-scale-in">
-        <Command className="glass-strong overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
-          <div className="flex items-center border-b border-white/[0.06] px-4">
+        <Command className="glass-strong overflow-hidden rounded-xl border border-border shadow-2xl">
+          <div className="flex items-center border-b border-border px-4">
             <Search className="h-4 w-4 text-muted" />
             <Command.Input
               value={search}
               onValueChange={setSearch}
               placeholder="Search any stock ticker or page..."
-              className="flex-1 bg-transparent px-3 py-4 text-sm text-foreground outline-none placeholder:text-muted/50"
+              className="flex-1 bg-transparent px-3 py-4 text-sm text-foreground outline-none placeholder:text-muted"
             />
-            <kbd className="rounded-md border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[10px] text-muted">
+            <kbd className="rounded-md border border-border bg-panel-elevated px-2 py-0.5 text-[10px] text-muted">
               ESC
             </kbd>
           </div>
@@ -283,7 +283,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                   <Command.Item
                     value={`go-to-${tickerUpper}`}
                     onSelect={() => handleSelect(`/stock/${tickerUpper}`)}
-                    className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground data-[selected]:bg-white/[0.05] data-[selected]:text-foreground"
+                    className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-panel-elevated hover:text-foreground data-[selected]:bg-panel-elevated data-[selected]:text-foreground"
                   >
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10 font-mono text-xs font-bold text-accent">
                       {tickerUpper}
@@ -295,7 +295,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     <ArrowRight className="h-4 w-4 text-muted" />
                   </Command.Item>
                 </Command.Group>
-                <Command.Separator className="my-2 h-px bg-white/[0.06]" />
+                <Command.Separator className="my-2 h-px bg-panel-elevated" />
               </>
             )}
 
@@ -310,7 +310,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     key={item.href}
                     value={`nav-${item.label}`}
                     onSelect={() => handleSelect(item.href)}
-                    className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground data-[selected]:bg-white/[0.05] data-[selected]:text-foreground"
+                    className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-panel-elevated hover:text-foreground data-[selected]:bg-panel-elevated data-[selected]:text-foreground"
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.label}</span>
@@ -321,23 +321,23 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             {/* Stocks */}
             {filteredStocks.length > 0 && (
               <>
-                <Command.Separator className="my-2 h-px bg-white/[0.06]" />
+                <Command.Separator className="my-2 h-px bg-panel-elevated" />
                 <Command.Group heading="Stocks" className="px-2">
                   {filteredStocks.map((stock) => (
                     <Command.Item
                       key={stock.ticker}
                       value={`stock-${stock.ticker}-${stock.name}`}
                       onSelect={() => handleSelect(`/stock/${stock.ticker}`)}
-                      className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground data-[selected]:bg-white/[0.05] data-[selected]:text-foreground"
+                      className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-panel-elevated hover:text-foreground data-[selected]:bg-panel-elevated data-[selected]:text-foreground"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.05] font-mono text-[10px] font-bold">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-panel-elevated font-mono text-[10px] font-bold">
                         {stock.ticker.slice(0, 4)}
                       </div>
                       <div className="flex-1">
                         <p className="font-mono text-xs font-bold">{stock.ticker}</p>
                         <p className="text-[10px] text-muted">{stock.name}</p>
                       </div>
-                      <span className="text-[10px] text-muted/60">{stock.sector}</span>
+                      <span className="text-[10px] text-muted">{stock.sector}</span>
                     </Command.Item>
                   ))}
                 </Command.Group>

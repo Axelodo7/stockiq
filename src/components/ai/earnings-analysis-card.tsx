@@ -23,10 +23,10 @@ export function EarningsAnalysisCard({ data, isLoading }: EarningsAnalysisCardPr
     return (
       <GlassCard>
         <div className="animate-pulse space-y-3">
-          <div className="h-4 w-32 rounded bg-white/[0.05]" />
+          <div className="h-4 w-32 rounded bg-panel-elevated" />
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-3 rounded bg-white/[0.05]" />
+              <div key={i} className="h-3 rounded bg-panel-elevated" />
             ))}
           </div>
         </div>
@@ -52,11 +52,11 @@ export function EarningsAnalysisCard({ data, isLoading }: EarningsAnalysisCardPr
 
       {/* Price & Surprise */}
       <div className="mb-4 grid grid-cols-2 gap-3">
-        <div className="rounded-lg bg-white/[0.03] p-3">
+        <div className="rounded-lg bg-panel-elevated p-3">
           <p className="text-[10px] text-muted">Current Price</p>
           <p className="font-mono text-lg font-bold">{formatCurrency(data.current_price)}</p>
         </div>
-        <div className="rounded-lg bg-white/[0.03] p-3">
+        <div className="rounded-lg bg-panel-elevated p-3">
           <p className="text-[10px] text-muted">EPS Surprise</p>
           <p className={cn(
             "font-mono text-lg font-bold",
@@ -71,7 +71,7 @@ export function EarningsAnalysisCard({ data, isLoading }: EarningsAnalysisCardPr
 
       {/* Metrics Grid */}
       <div className="mb-4 grid grid-cols-3 gap-2">
-        <div className="rounded-lg bg-white/[0.03] p-2 text-center">
+        <div className="rounded-lg bg-panel-elevated p-2 text-center">
           <div className="flex items-center justify-center gap-1">
             {data.price_reaction !== null && data.price_reaction > 0 ? (
               <TrendingUp className="h-3 w-3 text-positive" />
@@ -87,14 +87,14 @@ export function EarningsAnalysisCard({ data, isLoading }: EarningsAnalysisCardPr
           </p>
           <p className="text-[9px] text-muted">Price Reaction</p>
         </div>
-        <div className="rounded-lg bg-white/[0.03] p-2 text-center">
+        <div className="rounded-lg bg-panel-elevated p-2 text-center">
           <Zap className={cn("mx-auto h-3 w-3", data.volume_spike > 2 ? "text-amber" : "text-muted")} />
           <p className={cn("font-mono text-xs font-bold", data.volume_spike > 2 ? "text-amber" : "")}>
             {data.volume_spike.toFixed(1)}x
           </p>
           <p className="text-[9px] text-muted">Volume Spike</p>
         </div>
-        <div className="rounded-lg bg-white/[0.03] p-2 text-center">
+        <div className="rounded-lg bg-panel-elevated p-2 text-center">
           <BarChart3 className="mx-auto h-3 w-3 text-muted" />
           <p className="font-mono text-xs font-bold">
             {data.expectations.magnitude || "N/A"}
@@ -108,23 +108,23 @@ export function EarningsAnalysisCard({ data, isLoading }: EarningsAnalysisCardPr
         <div className="mb-4">
           <p className="mb-2 text-[10px] font-medium uppercase text-muted">Post-Earnings Drift</p>
           <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-lg bg-white/[0.03] p-2">
+            <div className="rounded-lg bg-panel-elevated p-2">
               <p className="text-[9px] text-muted">Avg 1D Return</p>
               <p className={cn("font-mono text-xs font-bold", data.drift_analysis.avg_1d_return >= 0 ? "text-positive" : "text-negative")}>
                 {data.drift_analysis.avg_1d_return > 0 ? "+" : ""}{data.drift_analysis.avg_1d_return.toFixed(2)}%
               </p>
             </div>
-            <div className="rounded-lg bg-white/[0.03] p-2">
+            <div className="rounded-lg bg-panel-elevated p-2">
               <p className="text-[9px] text-muted">Avg 5D Return</p>
               <p className={cn("font-mono text-xs font-bold", data.drift_analysis.avg_5d_return >= 0 ? "text-positive" : "text-negative")}>
                 {data.drift_analysis.avg_5d_return > 0 ? "+" : ""}{data.drift_analysis.avg_5d_return.toFixed(2)}%
               </p>
             </div>
-            <div className="rounded-lg bg-white/[0.03] p-2">
+            <div className="rounded-lg bg-panel-elevated p-2">
               <p className="text-[9px] text-muted">Positive Days</p>
               <p className="font-mono text-xs font-bold">{data.drift_analysis.positive_days_pct.toFixed(1)}%</p>
             </div>
-            <div className="rounded-lg bg-white/[0.03] p-2">
+            <div className="rounded-lg bg-panel-elevated p-2">
               <p className="text-[9px] text-muted">Return Volatility</p>
               <p className="font-mono text-xs font-bold">{data.drift_analysis.volatility_of_returns.toFixed(2)}%</p>
             </div>

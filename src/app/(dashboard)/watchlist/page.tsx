@@ -113,7 +113,7 @@ export default function WatchlistPage() {
             placeholder="Search watchlist..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] py-2 pl-9 pr-8 text-xs text-foreground placeholder:text-muted focus:border-accent/30 focus:outline-none focus:ring-1 focus:ring-accent/20"
+            className="w-full rounded-lg border border-border bg-panel-elevated py-2 pl-9 pr-8 text-xs text-foreground placeholder:text-muted focus:border-accent/30 focus:outline-none focus:ring-1 focus:ring-accent/20"
           />
           {search && (
             <button
@@ -125,7 +125,7 @@ export default function WatchlistPage() {
           )}
         </div>
         <GlowBadge variant="default">{filtered.length} stocks</GlowBadge>
-        <div className="flex rounded-lg border border-white/[0.06] bg-white/[0.03] p-0.5">
+        <div className="flex rounded-lg border border-border bg-panel-elevated p-0.5">
           <button
             onClick={() => setViewMode("grid")}
             className={cn(
@@ -203,7 +203,7 @@ export default function WatchlistPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-white/[0.04] text-left text-xs uppercase text-muted">
+                <tr className="border-b border-border text-left text-xs uppercase text-muted">
                   <th className="px-4 py-2 font-medium">Stock</th>
                   <th className="px-4 py-2 text-right font-medium">Price</th>
                   <th className="px-4 py-2 text-right font-medium">Change</th>
@@ -213,9 +213,9 @@ export default function WatchlistPage() {
                   <th className="px-4 py-2 text-right font-medium">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.04]">
+              <tbody className="divide-y divide-border">
                 {filtered.map((stock) => (
-                  <tr key={stock.id} className="hover:bg-white/[0.02]">
+                  <tr key={stock.id} className="hover:bg-panel">
                     <td className="px-4 py-3">
                       <Link href={`/stock/${stock.ticker}`} className="flex items-center gap-2">
                         <Star className="h-3 w-3 text-amber fill-amber" />

@@ -25,11 +25,11 @@ export function AIAnalysisCard({ data, isLoading }: AIAnalysisCardProps) {
     return (
       <GlassCard>
         <div className="animate-pulse space-y-3">
-          <div className="h-4 w-32 rounded bg-white/[0.05]" />
-          <div className="h-8 w-24 rounded bg-white/[0.05]" />
+          <div className="h-4 w-32 rounded bg-panel-elevated" />
+          <div className="h-8 w-24 rounded bg-panel-elevated" />
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-3 rounded bg-white/[0.05]" />
+              <div key={i} className="h-3 rounded bg-panel-elevated" />
             ))}
           </div>
         </div>
@@ -74,7 +74,7 @@ export function AIAnalysisCard({ data, isLoading }: AIAnalysisCardProps) {
             <span className="text-[10px] text-muted">Bullish</span>
             <span className="font-mono text-[10px] text-positive">{(data.bullish_probability * 100).toFixed(1)}%</span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-white/[0.05]">
+          <div className="h-1.5 w-full rounded-full bg-panel-elevated">
             <div className="h-1.5 rounded-full bg-positive" style={{ width: `${data.bullish_probability * 100}%` }} />
           </div>
         </div>
@@ -83,7 +83,7 @@ export function AIAnalysisCard({ data, isLoading }: AIAnalysisCardProps) {
             <span className="text-[10px] text-muted">Bearish</span>
             <span className="font-mono text-[10px] text-negative">{(data.bearish_probability * 100).toFixed(1)}%</span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-white/[0.05]">
+          <div className="h-1.5 w-full rounded-full bg-panel-elevated">
             <div className="h-1.5 rounded-full bg-negative" style={{ width: `${data.bearish_probability * 100}%` }} />
           </div>
         </div>
@@ -93,7 +93,7 @@ export function AIAnalysisCard({ data, isLoading }: AIAnalysisCardProps) {
       <div className="mb-4 space-y-2">
         <p className="text-[10px] font-medium uppercase text-muted">Signals</p>
         {data.signals.map((sig, i) => (
-          <div key={i} className="flex items-center justify-between border-b border-white/[0.04] py-1.5 last:border-0">
+          <div key={i} className="flex items-center justify-between border-b border-border py-1.5 last:border-0">
             <div className="flex items-center gap-2">
               <div className={cn(
                 "h-1.5 w-1.5 rounded-full",

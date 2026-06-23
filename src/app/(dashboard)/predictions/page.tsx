@@ -42,7 +42,7 @@ export default function PredictionsPage() {
                 value={searchTicker}
                 onChange={(e) => setSearchTicker(e.target.value.toUpperCase())}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="w-full rounded-lg border border-border bg-panel py-2.5 pl-10 pr-4 text-sm font-mono placeholder:text-muted/50 focus:border-accent focus:outline-none"
+                className="w-full rounded-lg border border-border bg-panel py-2.5 pl-10 pr-4 text-sm font-mono placeholder:text-muted focus:border-accent focus:outline-none"
               />
             </div>
             <button

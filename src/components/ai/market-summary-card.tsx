@@ -23,10 +23,10 @@ export function MarketSummaryCard({ data, isLoading }: MarketSummaryCardProps) {
     return (
       <GlassCard>
         <div className="animate-pulse space-y-3">
-          <div className="h-4 w-32 rounded bg-white/[0.05]" />
+          <div className="h-4 w-32 rounded bg-panel-elevated" />
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-3 rounded bg-white/[0.05]" />
+              <div key={i} className="h-3 rounded bg-panel-elevated" />
             ))}
           </div>
         </div>
@@ -53,19 +53,19 @@ export function MarketSummaryCard({ data, isLoading }: MarketSummaryCardProps) {
 
       {/* Overview Metrics */}
       <div className="mb-4 grid grid-cols-3 gap-2">
-        <div className="rounded-lg bg-white/[0.03] p-2.5 text-center">
+        <div className="rounded-lg bg-panel-elevated p-2.5 text-center">
           <p className={cn("font-mono text-sm font-bold", data.avg_change_pct >= 0 ? "text-positive" : "text-negative")}>
             {data.avg_change_pct > 0 ? "+" : ""}{data.avg_change_pct.toFixed(2)}%
           </p>
           <p className="text-[10px] text-muted">Avg Change</p>
         </div>
-        <div className="rounded-lg bg-white/[0.03] p-2.5 text-center">
+        <div className="rounded-lg bg-panel-elevated p-2.5 text-center">
           <p className={cn("font-mono text-sm font-bold", data.avg_5d_return >= 0 ? "text-positive" : "text-negative")}>
             {data.avg_5d_return > 0 ? "+" : ""}{data.avg_5d_return.toFixed(2)}%
           </p>
           <p className="text-[10px] text-muted">5D Return</p>
         </div>
-        <div className="rounded-lg bg-white/[0.03] p-2.5 text-center">
+        <div className="rounded-lg bg-panel-elevated p-2.5 text-center">
           <p className={cn("font-mono text-sm font-bold", data.avg_20d_return >= 0 ? "text-positive" : "text-negative")}>
             {data.avg_20d_return > 0 ? "+" : ""}{data.avg_20d_return.toFixed(2)}%
           </p>
@@ -79,7 +79,7 @@ export function MarketSummaryCard({ data, isLoading }: MarketSummaryCardProps) {
           <span className="text-[10px] text-muted">Bullish {data.bullish_count}/{data.total_stocks}</span>
           <span className="text-[10px] text-muted">Bearish {data.bearish_count}/{data.total_stocks}</span>
         </div>
-        <div className="h-2 w-full rounded-full bg-white/[0.05] overflow-hidden">
+        <div className="h-2 w-full rounded-full bg-panel-elevated overflow-hidden">
           <div className="flex h-full">
             <div className="bg-positive" style={{ width: `${(data.bullish_count / data.total_stocks) * 100}%` }} />
             <div className="bg-muted/30" style={{ width: `${((data.total_stocks - data.bullish_count - data.bearish_count) / data.total_stocks) * 100}%` }} />

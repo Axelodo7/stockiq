@@ -93,22 +93,22 @@ export default function EarningsPage() {
 
       {/* Upcoming Earnings Timeline */}
       <GlassCard padding="none">
-        <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-cyan" />
             <h2 className="font-display text-sm font-semibold">Upcoming Earnings</h2>
           </div>
           <div className="flex gap-1">
-            <button className="rounded p-1 text-muted hover:bg-white/[0.05] hover:text-foreground">
+            <button className="rounded p-1 text-muted hover:bg-panel-elevated hover:text-foreground">
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <button className="rounded p-1 text-muted hover:bg-white/[0.05] hover:text-foreground">
+            <button className="rounded p-1 text-muted hover:bg-panel-elevated hover:text-foreground">
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div className="divide-y divide-white/[0.04]">
+        <div className="divide-y divide-border">
           {upcoming.map((event) => {
             const days = daysUntil(event.date);
             const time = timeConfig[event.time];
@@ -167,7 +167,7 @@ export default function EarningsPage() {
 
       {/* Recently Reported */}
       <GlassCard padding="none">
-        <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4 text-amber" />
             <h2 className="font-display text-sm font-semibold">Recently Reported</h2>
@@ -177,7 +177,7 @@ export default function EarningsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-white/[0.04] text-left text-xs uppercase text-muted">
+              <tr className="border-b border-border text-left text-xs uppercase text-muted">
                 <th className="px-4 py-2 font-medium">Company</th>
                 <th className="px-4 py-2 text-right font-medium">Date</th>
                 <th className="px-4 py-2 text-right font-medium">EPS Est.</th>
@@ -187,11 +187,11 @@ export default function EarningsPage() {
                 <th className="px-4 py-2 text-right font-medium">Trend</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody className="divide-y divide-border">
               {reported.map((event) => {
                 const beat = event.actualEPS! > event.expectedEPS;
                 return (
-                  <tr key={event.id} className="hover:bg-white/[0.02]">
+                  <tr key={event.id} className="hover:bg-panel">
                     <td className="px-4 py-2.5">
                       <Link href={`/stock/${event.ticker}`} className="flex items-center gap-2">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10 font-mono text-[10px] font-bold text-accent">

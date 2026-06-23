@@ -234,7 +234,7 @@ export default function PortfolioPage() {
             {lastUpdated && (
               <>
                 <span className="text-white/20">·</span>
-                <span className="text-[10px] text-muted/60">
+                <span className="text-[10px] text-muted">
                   Live · {lastUpdated.toLocaleTimeString()}
                 </span>
               </>
@@ -245,7 +245,7 @@ export default function PortfolioPage() {
           <button
             onClick={() => refreshPrices(true)}
             disabled={refreshing || positions.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-xs text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel-elevated px-3 py-2 text-xs text-muted transition-colors hover:bg-panel-elevated hover:text-foreground disabled:opacity-50"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
             <span className="hidden sm:inline">Refresh</span>
@@ -261,7 +261,7 @@ export default function PortfolioPage() {
         /* Empty State */
         <GlassCard>
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-accent/10">
               <Briefcase className="h-8 w-8 text-accent" />
             </div>
             <h3 className="mb-1 font-display text-lg font-semibold">No positions yet</h3>
@@ -330,7 +330,7 @@ export default function PortfolioPage() {
 
           {/* Positions Table */}
           <GlassCard padding="none">
-            <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div className="flex items-center gap-2">
                 <Briefcase className="h-4 w-4 text-accent" />
                 <h2 className="font-display text-sm font-semibold">Positions</h2>
@@ -340,7 +340,7 @@ export default function PortfolioPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-white/[0.04] text-left text-xs uppercase text-muted">
+                  <tr className="border-b border-border text-left text-xs uppercase text-muted">
                     <th className="px-4 py-2 font-medium">Stock</th>
                     <th className="hidden px-4 py-2 text-right font-medium sm:table-cell">Shares</th>
                     <th className="hidden px-4 py-2 text-right font-medium md:table-cell">Avg Cost</th>
@@ -351,9 +351,9 @@ export default function PortfolioPage() {
                     <th className="px-4 py-2 text-right font-medium"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/[0.04]">
+                <tbody className="divide-y divide-border">
                   {enriched.map((p) => (
-                    <tr key={p.id} className="hover:bg-white/[0.02]">
+                    <tr key={p.id} className="hover:bg-panel">
                       <td className="px-4 py-3">
                         <Link href={`/stock/${p.ticker}`} className="flex items-center gap-2">
                           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10 font-mono text-[10px] font-bold text-accent">
@@ -416,7 +416,7 @@ export default function PortfolioPage() {
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t border-white/[0.06]">
+                  <tr className="border-t border-border">
                     <td className="px-4 py-3 font-bold">Total</td>
                     <td className="hidden px-4 py-3 text-right font-mono text-muted sm:table-cell">—</td>
                     <td className="hidden px-4 py-3 text-right font-mono text-muted md:table-cell">—</td>
@@ -462,7 +462,7 @@ export default function PortfolioPage() {
                     setSearch(e.target.value);
                     setSelectedTicker(null);
                   }}
-                  className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] py-2 pl-9 pr-8 text-xs text-foreground placeholder:text-muted focus:border-accent/30 focus:outline-none focus:ring-1 focus:ring-accent/20"
+                  className="w-full rounded-lg border border-border bg-panel-elevated py-2 pl-9 pr-8 text-xs text-foreground placeholder:text-muted focus:border-accent/30 focus:outline-none focus:ring-1 focus:ring-accent/20"
                 />
                 {(search || selectedTicker) && (
                   <button
@@ -474,7 +474,7 @@ export default function PortfolioPage() {
                 )}
               </div>
               {!selectedTicker && search && (
-                <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-white/[0.06] bg-panel">
+                <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-border bg-panel">
                   {filteredTickers.length === 0 && !showCustomOption ? (
                     <div className="px-3 py-2 text-xs text-muted">No results found</div>
                   ) : (
@@ -489,7 +489,7 @@ export default function PortfolioPage() {
                               setSearch("");
                               setAvgCost(info.price > 0 ? info.price.toFixed(2) : "");
                             }}
-                            className="flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.04]"
+                            className="flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-panel-elevated"
                           >
                             <div>
                               <span className="font-mono font-bold">{t}</span>
@@ -506,7 +506,7 @@ export default function PortfolioPage() {
                             setSearch("");
                             setAvgCost("");
                           }}
-                          className="flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.04] border-t border-white/[0.06]"
+                          className="flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-panel-elevated border-t border-border"
                         >
                           <div>
                             <span className="font-mono font-bold">{searchUpper}</span>
@@ -531,7 +531,7 @@ export default function PortfolioPage() {
                 placeholder="0"
                 value={shares}
                 onChange={(e) => setShares(e.target.value)}
-                className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-xs text-foreground placeholder:text-muted focus:border-accent/30 focus:outline-none focus:ring-1 focus:ring-accent/20"
+                className="w-full rounded-lg border border-border bg-panel-elevated px-3 py-2 text-xs text-foreground placeholder:text-muted focus:border-accent/30 focus:outline-none focus:ring-1 focus:ring-accent/20"
               />
             </div>
 
@@ -545,13 +545,13 @@ export default function PortfolioPage() {
                 placeholder="0.00"
                 value={avgCost}
                 onChange={(e) => setAvgCost(e.target.value)}
-                className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-xs text-foreground placeholder:text-muted focus:border-accent/30 focus:outline-none focus:ring-1 focus:ring-accent/20"
+                className="w-full rounded-lg border border-border bg-panel-elevated px-3 py-2 text-xs text-foreground placeholder:text-muted focus:border-accent/30 focus:outline-none focus:ring-1 focus:ring-accent/20"
               />
             </div>
 
             {/* Preview */}
             {selectedTicker && shares && avgCost && (
-              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+              <div className="rounded-lg border border-border bg-panel p-3">
                 <div className="flex justify-between text-xs">
                   <span className="text-muted">Total Cost</span>
                   <span className="font-mono font-bold">

@@ -91,7 +91,7 @@ export function NotificationBell() {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative rounded-lg p-2 text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground"
+        className="relative rounded-lg p-2 text-muted transition-colors hover:bg-panel-elevated hover:text-foreground"
       >
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
@@ -106,7 +106,7 @@ export function NotificationBell() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full z-50 mt-2 w-80">
             <GlassCard padding="none" className="max-h-[400px] overflow-hidden">
-              <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+              <div className="flex items-center justify-between border-b border-border px-4 py-3">
                 <div className="flex items-center gap-2">
                   <Bell className="h-4 w-4 text-accent" />
                   <h3 className="font-display text-sm font-semibold">Notifications</h3>
@@ -124,7 +124,7 @@ export function NotificationBell() {
                 )}
               </div>
 
-              <div className="divide-y divide-white/[0.04] overflow-y-auto max-h-[320px]">
+              <div className="divide-y divide-border overflow-y-auto max-h-[320px]">
                 {notifications.length === 0 ? (
                   <div className="py-8 text-center text-xs text-muted">
                     No notifications
@@ -134,7 +134,7 @@ export function NotificationBell() {
                     <div
                       key={n.id}
                       className={cn(
-                        "flex items-start gap-3 px-4 py-3 transition-colors hover:bg-white/[0.02]",
+                        "flex items-start gap-3 px-4 py-3 transition-colors hover:bg-panel",
                         !n.read && "bg-accent/5"
                       )}
                     >
@@ -153,14 +153,14 @@ export function NotificationBell() {
                         {!n.read && (
                           <button
                             onClick={() => markRead(n.id)}
-                            className="rounded p-1 text-muted hover:bg-white/[0.05] hover:text-foreground"
+                            className="rounded p-1 text-muted hover:bg-panel-elevated hover:text-foreground"
                           >
                             <Check className="h-3 w-3" />
                           </button>
                         )}
                         <button
                           onClick={() => dismiss(n.id)}
-                          className="rounded p-1 text-muted hover:bg-white/[0.05] hover:text-negative"
+                          className="rounded p-1 text-muted hover:bg-panel-elevated hover:text-negative"
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>

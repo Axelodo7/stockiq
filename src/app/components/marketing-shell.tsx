@@ -49,7 +49,7 @@ export default function MarketingShell({
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="fixed inset-x-0 top-0 z-50 glass border-b border-border">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2">
             <TrendingUp className="h-6 w-6 text-accent" />
@@ -89,7 +89,7 @@ export default function MarketingShell({
         </nav>
 
         {mobileOpen && (
-          <div className="glass border-t border-border md:hidden">
+          <div className="border-t border-border bg-background md:hidden">
             <div className="flex flex-col gap-1 px-4 py-4">
               {navLinks.map((link) => (
                 <Link

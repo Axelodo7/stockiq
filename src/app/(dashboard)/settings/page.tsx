@@ -120,7 +120,7 @@ export default function SettingsPage() {
             {tiers.map((t) => {
               const isActive = t.tier === currentTier;
               const tierColors: Record<string, string> = {
-                FREE: "border-white/[0.06]",
+                FREE: "border-border",
                 PRO: "border-cyan/30",
                 ELITE: "border-purple/30",
                 ENTERPRISE: "border-amber/30",
@@ -188,7 +188,7 @@ export default function SettingsPage() {
                   <div
                     key={f.name}
                     className={cn(
-                      "flex items-center justify-between border-b border-white/[0.04] py-3 last:border-0",
+                      "flex items-center justify-between border-b border-border py-3 last:border-0",
                       !allowed && "opacity-50"
                     )}
                   >
@@ -268,7 +268,7 @@ export default function SettingsPage() {
                   <input
                     type="text"
                     defaultValue="Alex Johnson"
-                    className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-xs text-foreground placeholder:text-muted focus:border-accent/30 focus:outline-none focus:ring-1 focus:ring-accent/20"
+                    className="w-full rounded-lg border border-border bg-panel-elevated px-3 py-2 text-xs text-foreground placeholder:text-muted focus:border-accent/30 focus:outline-none focus:ring-1 focus:ring-accent/20"
                   />
                 </div>
                 <div>
@@ -276,7 +276,7 @@ export default function SettingsPage() {
                   <input
                     type="email"
                     defaultValue="alex@stockiq.app"
-                    className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-xs text-foreground placeholder:text-muted focus:border-accent/30 focus:outline-none focus:ring-1 focus:ring-accent/20"
+                    className="w-full rounded-lg border border-border bg-panel-elevated px-3 py-2 text-xs text-foreground placeholder:text-muted focus:border-accent/30 focus:outline-none focus:ring-1 focus:ring-accent/20"
                   />
                 </div>
               </div>

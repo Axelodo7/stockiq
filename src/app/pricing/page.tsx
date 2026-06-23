@@ -10,7 +10,7 @@ const tiers = [
     period: "forever",
     description: "Perfect for getting started with stock tracking",
     color: "text-muted",
-    borderColor: "border-white/[0.06]",
+    borderColor: "border-border",
     features: [
       { text: "3 watchlists", included: true },
       { text: "5 price alerts", included: true },
@@ -117,15 +117,15 @@ export default function PricingPage() {
               return (
                 <div
                   key={tier.name}
-                  className={`relative flex flex-col rounded-2xl border bg-white/[0.02] p-6 backdrop-blur-xl transition-all hover:bg-white/[0.04] ${
+                  className={`relative flex flex-col rounded-xl border p-6 transition-colors ${
                     tier.highlighted
-                      ? `${tier.borderColor} shadow-[0_0_40px_-15px_var(--accent)]`
-                      : "border-white/[0.06] hover:border-white/10"
+                      ? `${tier.borderColor} bg-panel-elevated`
+                      : "border-border bg-panel hover:border-accent/30"
                   }`}
                 >
                   {tier.highlighted && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-[10px] font-bold text-black">
-                      MOST POPULAR
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-md bg-accent px-3 py-1 text-xs font-semibold text-accent-fg">
+                      Most Popular
                     </div>
                   )}
 
@@ -147,9 +147,9 @@ export default function PricingPage() {
                         {feat.included ? (
                           <Check className="h-3.5 w-3.5 shrink-0 text-positive" />
                         ) : (
-                          <Lock className="h-3.5 w-3.5 shrink-0 text-muted/30" />
+                          <Lock className="h-3.5 w-3.5 shrink-0 text-muted" />
                         )}
-                        <span className={feat.included ? "text-foreground" : "text-muted/40"}>
+                        <span className={feat.included ? "text-foreground" : "text-muted"}>
                           {feat.text}
                         </span>
                       </li>
@@ -158,10 +158,10 @@ export default function PricingPage() {
 
                   <Link
                     href={tier.href}
-                    className={`block w-full rounded-xl py-2.5 text-center text-sm font-bold transition-all ${
+                    className={`block w-full rounded-lg py-2.5 text-center text-sm font-semibold transition-colors ${
                       tier.highlighted
-                        ? "bg-gradient-to-r from-cyan to-accent text-black hover:shadow-lg hover:shadow-accent/20"
-                        : "border border-white/10 bg-white/[0.03] text-foreground hover:bg-white/[0.06]"
+                        ? "bg-accent text-accent-fg hover:bg-accent/90"
+                        : "border border-border bg-panel-elevated text-foreground hover:border-accent/30"
                     }`}
                   >
                     {tier.cta}

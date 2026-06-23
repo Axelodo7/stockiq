@@ -101,7 +101,7 @@ export default function RiskPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Concentration Risk */}
         <GlassCard padding="none">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber" />
               <h2 className="font-display text-sm font-semibold">Concentration Risk</h2>
@@ -110,16 +110,16 @@ export default function RiskPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-white/[0.04] text-left text-[10px] uppercase text-muted">
+                <tr className="border-b border-border text-left text-[10px] uppercase text-muted">
                   <th className="px-4 py-2 font-medium">Stock</th>
                   <th className="px-4 py-2 text-right font-medium">Weight</th>
                   <th className="px-4 py-2 text-right font-medium">Risk Contrib.</th>
                   <th className="px-4 py-2 text-right font-medium">Risk</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.04]">
+              <tbody className="divide-y divide-border">
                 {concentrationRisk.map((item) => (
-                  <tr key={item.ticker} className="hover:bg-white/[0.02]">
+                  <tr key={item.ticker} className="hover:bg-panel">
                     <td className="px-4 py-2.5">
                       <Link href={`/stock/${item.ticker}`} className="font-mono font-bold hover:text-accent">
                         {item.ticker}
@@ -143,7 +143,7 @@ export default function RiskPage() {
 
         {/* Sector Exposure */}
         <GlassCard padding="none">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-cyan" />
               <h2 className="font-display text-sm font-semibold">Sector Exposure</h2>
@@ -160,7 +160,7 @@ export default function RiskPage() {
                       <span className="text-[10px] text-muted">β {s.beta.toFixed(2)}</span>
                     </div>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-white/[0.05]">
+                  <div className="h-2 w-full rounded-full bg-panel-elevated">
                     <div
                       className="h-2 rounded-full bg-gradient-to-r from-cyan to-accent"
                       style={{ width: `${s.weight}%` }}
@@ -172,7 +172,7 @@ export default function RiskPage() {
           </div>
 
           {/* Risk Summary */}
-          <div className="border-t border-white/[0.06] p-4">
+          <div className="border-t border-border p-4">
             <div className="rounded-lg bg-amber/5 p-3">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="mt-0.5 h-4 w-4 text-amber" />
@@ -190,14 +190,14 @@ export default function RiskPage() {
 
       {/* Risk Alerts */}
       <GlassCard padding="none">
-        <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-accent" />
             <h2 className="font-display text-sm font-semibold">Risk Alerts</h2>
           </div>
           <GlowBadge variant="default">{riskAlerts.length} alerts</GlowBadge>
         </div>
-        <div className="divide-y divide-white/[0.04]">
+        <div className="divide-y divide-border">
           {riskAlerts.map((alert, i) => {
             const config = severityConfig[alert.severity];
             const Icon = config.icon;
@@ -205,7 +205,7 @@ export default function RiskPage() {
               <div key={i} className="flex items-center gap-3 px-4 py-3">
                 <div className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-lg",
-                  alert.severity === "high" ? "bg-negative/10" : alert.severity === "medium" ? "bg-amber/10" : "bg-white/[0.05]"
+                  alert.severity === "high" ? "bg-negative/10" : alert.severity === "medium" ? "bg-amber/10" : "bg-panel-elevated"
                 )}>
                   <Icon className={cn(
                     "h-4 w-4",

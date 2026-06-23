@@ -140,8 +140,8 @@ export function ChatBot() {
         className={cn(
           "fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-105",
           open
-            ? "bg-white/10 text-foreground"
-            : "bg-gradient-to-br from-cyan to-purple text-foreground"
+            ? "bg-panel-elevated text-foreground border border-border"
+            : "bg-accent text-accent-fg"
         )}
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
@@ -149,10 +149,10 @@ export function ChatBot() {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 flex w-[340px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0e17]/95 shadow-2xl backdrop-blur-xl sm:w-[380px]">
+        <div className="fixed bottom-24 right-6 z-50 flex w-[340px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-xl border border-border bg-panel shadow-xl sm:w-[380px]">
           {/* Header */}
-          <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-cyan to-purple">
+          <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent">
               <Bot className="h-4 w-4 text-foreground" />
             </div>
             <div>
@@ -178,7 +178,7 @@ export function ChatBot() {
                     "max-w-[80%] whitespace-pre-line rounded-xl px-3 py-2 text-xs leading-relaxed",
                     msg.role === "user"
                       ? "bg-accent/20 text-foreground"
-                      : "bg-white/[0.05] text-muted"
+                      : "bg-panel-elevated text-muted"
                   )}
                 >
                   {msg.text}
@@ -194,7 +194,7 @@ export function ChatBot() {
           </div>
 
           {/* Quick questions */}
-          <div className="flex gap-1.5 overflow-x-auto border-t border-white/[0.04] px-4 py-2">
+          <div className="flex gap-1.5 overflow-x-auto border-t border-border px-4 py-2">
             {["Pricing", "Features", "Portfolio", "Predictions"].map((q) => (
               <button
                 key={q}
@@ -211,7 +211,7 @@ export function ChatBot() {
                     setInput("");
                   }, 100);
                 }}
-                className="shrink-0 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1 text-[10px] text-muted transition-colors hover:border-cyan/30 hover:text-foreground"
+                className="shrink-0 rounded-full border border-border bg-panel-elevated px-3 py-1 text-[10px] text-muted transition-colors hover:border-cyan/30 hover:text-foreground"
               >
                 {q}
               </button>
@@ -219,7 +219,7 @@ export function ChatBot() {
           </div>
 
           {/* Input */}
-          <div className="flex items-center gap-2 border-t border-white/[0.06] px-3 py-2">
+          <div className="flex items-center gap-2 border-t border-border px-3 py-2">
             <input
               ref={inputRef}
               type="text"
@@ -227,7 +227,7 @@ export function ChatBot() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send()}
               placeholder="Ask a question..."
-              className="flex-1 rounded-lg bg-white/[0.05] px-3 py-2 text-xs text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-cyan/30"
+              className="flex-1 rounded-lg bg-panel-elevated px-3 py-2 text-xs text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-cyan/30"
             />
             <button
               onClick={send}

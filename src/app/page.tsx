@@ -1,7 +1,6 @@
 import MarketingShell from "./components/marketing-shell";
 import Link from "next/link";
 import {
-  TrendingUp,
   Activity,
   Brain,
   Briefcase,
@@ -10,9 +9,9 @@ import {
   Zap,
   Crown,
   Building2,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 
 const features = [
   {
@@ -57,7 +56,6 @@ const pricingTiers = [
     cta: "Get Started",
     href: "/sign-up",
     highlighted: false,
-    color: "text-muted",
   },
   {
     name: "Pro",
@@ -68,7 +66,6 @@ const pricingTiers = [
     cta: "Start Pro Trial",
     href: "/sign-up",
     highlighted: true,
-    color: "text-cyan",
   },
   {
     name: "Elite",
@@ -79,7 +76,6 @@ const pricingTiers = [
     cta: "Start Elite Trial",
     href: "/sign-up",
     highlighted: false,
-    color: "text-purple",
   },
   {
     name: "Enterprise",
@@ -90,7 +86,6 @@ const pricingTiers = [
     cta: "Contact Sales",
     href: "/sign-up",
     highlighted: false,
-    color: "text-amber",
   },
 ];
 
@@ -99,23 +94,14 @@ export default function MarketingHome() {
     <MarketingShell>
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute left-1/2 top-0 h-[600px] w-[900px] -translate-x-1/2 -translate-y-1/4 rounded-full bg-accent/5 blur-[120px]" />
-          <div className="absolute right-0 top-1/3 h-[400px] w-[500px] translate-x-1/4 rounded-full bg-accent/3 blur-[100px]" />
-          <div className="absolute bottom-0 left-1/4 h-[300px] w-[400px] translate-y-1/3 rounded-full bg-positive/3 blur-[80px]" />
-        </div>
-
         <div className="relative mx-auto max-w-7xl px-4 py-32 sm:px-6 sm:py-40 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-4 py-1.5 text-xs font-medium text-accent">
-              <TrendingUp className="h-3.5 w-3.5" />
-              AI-Powered Market Intelligence
-            </div>
-            <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-              Smarter Trading,{" "}
+            <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl" style={{ textWrap: "balance" }}>
+              Smarter Trading,
+              <br />
               <span className="text-accent">Powered by AI</span>
             </h1>
-            <p className="mt-6 text-lg text-muted sm:text-xl">
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted sm:text-xl" style={{ textWrap: "pretty" }}>
               Harness machine learning and real-time market data to make
               informed investment decisions. From technical analysis to
               portfolio optimization — all in one terminal.
@@ -123,6 +109,12 @@ export default function MarketingHome() {
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button size="lg" asChild>
                 <Link href="/sign-up">Get Started Free</Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <Link href="/sign-in">
+                  Log In
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
               </Button>
             </div>
           </div>
@@ -133,32 +125,30 @@ export default function MarketingHome() {
       <section id="features" className="border-t border-border bg-panel py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            <h2 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl" style={{ textWrap: "balance" }}>
               Everything you need to trade smarter
             </h2>
-            <p className="mt-4 text-muted">
+            <p className="mt-4 text-muted" style={{ textWrap: "pretty" }}>
               Professional-grade tools previously available only to institutional
               traders, now in your hands.
             </p>
           </div>
-          <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-16 grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
             {features.map((feature) => (
-              <Card
+              <div
                 key={feature.title}
-                className="group border-border/50 bg-background transition-all hover:border-accent/30 hover:shadow-[0_0_30px_-10px_var(--accent)]"
+                className="group bg-panel p-6 transition-colors hover:bg-panel-elevated"
               >
-                <CardContent className="p-6">
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10 text-accent transition-colors group-hover:bg-accent/20">
-                    <feature.icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="font-display text-lg font-semibold text-foreground">
-                    {feature.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                  <feature.icon className="h-5 w-5" />
+                </div>
+                <h3 className="font-display text-base font-semibold text-foreground">
+                  {feature.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  {feature.description}
+                </p>
+              </div>
             ))}
           </div>
         </div>
@@ -170,7 +160,7 @@ export default function MarketingHome() {
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
-                <div className="font-mono text-4xl font-bold text-accent sm:text-5xl">
+                <div className="font-display text-4xl font-bold text-foreground sm:text-5xl">
                   {stat.value}
                 </div>
                 <div className="mt-2 text-sm text-muted">{stat.label}</div>
@@ -184,10 +174,10 @@ export default function MarketingHome() {
       <section id="pricing" className="border-t border-border bg-panel py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            <h2 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl" style={{ textWrap: "balance" }}>
               Simple, transparent pricing
             </h2>
-            <p className="mt-4 text-muted">
+            <p className="mt-4 text-muted" style={{ textWrap: "pretty" }}>
               Choose the plan that fits your trading style.
             </p>
           </div>
@@ -197,19 +187,19 @@ export default function MarketingHome() {
               return (
                 <div
                   key={tier.name}
-                  className={`relative flex flex-col rounded-2xl border bg-white/[0.02] p-6 backdrop-blur-xl transition-all hover:bg-white/[0.04] ${
+                  className={`relative flex flex-col rounded-xl border p-6 transition-colors ${
                     tier.highlighted
-                      ? "border-cyan/30 shadow-[0_0_40px_-15px_var(--accent)]"
-                      : "border-white/[0.06] hover:border-white/10"
+                      ? "border-accent bg-panel-elevated"
+                      : "border-border bg-panel hover:border-accent/30"
                   }`}
                 >
                   {tier.highlighted && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-[10px] font-bold text-black">
-                      MOST POPULAR
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-md bg-accent px-3 py-1 text-xs font-semibold text-accent-fg">
+                      Most Popular
                     </div>
                   )}
                   <div className="mb-4 flex items-center gap-2">
-                    <Icon className={`h-5 w-5 ${tier.color}`} />
+                    <Icon className="h-5 w-5 text-accent" />
                     <h3 className="font-display text-lg font-semibold text-foreground">
                       {tier.name}
                     </h3>
@@ -218,22 +208,18 @@ export default function MarketingHome() {
                     <span className="font-display text-4xl font-bold text-foreground">
                       {tier.price}
                     </span>
-                    <span className="text-xs text-muted">{tier.period}</span>
+                    <span className="text-sm text-muted">{tier.period}</span>
                   </div>
                   <ul className="mb-6 flex-1 space-y-2.5">
                     {tier.features.map((feat) => (
-                      <li key={feat} className="flex items-center gap-2 text-xs">
-                        <Check className="h-3.5 w-3.5 shrink-0 text-positive" />
+                      <li key={feat} className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 shrink-0 text-positive" />
                         <span className="text-foreground">{feat}</span>
                       </li>
                     ))}
                   </ul>
                   <Button
-                    className={`w-full rounded-xl ${
-                      tier.highlighted
-                        ? "bg-gradient-to-r from-cyan to-accent text-black font-bold hover:shadow-lg hover:shadow-accent/20"
-                        : ""
-                    }`}
+                    className="w-full"
                     variant={tier.highlighted ? "default" : "outline"}
                     asChild
                   >
@@ -250,10 +236,10 @@ export default function MarketingHome() {
       <section id="about" className="border-t border-border py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            <h2 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl" style={{ textWrap: "balance" }}>
               Built for the future of investing
             </h2>
-            <p className="mt-6 text-lg text-muted">
+            <p className="mt-6 text-lg text-muted" style={{ textWrap: "pretty" }}>
               StockIQ combines institutional-grade data infrastructure with
               cutting-edge machine learning to give every investor an edge.
               Our platform processes millions of data points per second to
@@ -266,10 +252,10 @@ export default function MarketingHome() {
       {/* CTA */}
       <section className="border-t border-border bg-panel py-20">
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-          <h2 className="font-display text-3xl font-bold tracking-tight text-foreground">
+          <h2 className="font-display text-3xl font-bold tracking-tight text-foreground" style={{ textWrap: "balance" }}>
             Ready to trade smarter?
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-muted">
+          <p className="mx-auto mt-4 max-w-xl text-muted" style={{ textWrap: "pretty" }}>
             Join thousands of traders using AI to make better investment
             decisions.
           </p>

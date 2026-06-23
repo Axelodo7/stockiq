@@ -23,10 +23,10 @@ export function TrendAnalysisCard({ data, isLoading }: TrendAnalysisCardProps) {
     return (
       <GlassCard>
         <div className="animate-pulse space-y-3">
-          <div className="h-4 w-32 rounded bg-white/[0.05]" />
+          <div className="h-4 w-32 rounded bg-panel-elevated" />
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-3 rounded bg-white/[0.05]" />
+              <div key={i} className="h-3 rounded bg-panel-elevated" />
             ))}
           </div>
         </div>
@@ -50,7 +50,7 @@ export function TrendAnalysisCard({ data, isLoading }: TrendAnalysisCardProps) {
       <div className="mb-4 space-y-2">
         <p className="text-[10px] font-medium uppercase text-muted">Trend Periods</p>
         {data.trends.map((trend, i) => (
-          <div key={i} className="flex items-center justify-between rounded-lg border border-white/[0.04] px-3 py-2">
+          <div key={i} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
             <div className="flex items-center gap-2">
               {trend.direction === "up" ? (
                 <ArrowUpRight className="h-4 w-4 text-positive" />
@@ -79,11 +79,11 @@ export function TrendAnalysisCard({ data, isLoading }: TrendAnalysisCardProps) {
       <div className="mb-4">
         <p className="mb-2 text-[10px] font-medium uppercase text-muted">Momentum</p>
         <div className="grid grid-cols-3 gap-2">
-          <div className="rounded-lg bg-white/[0.03] p-2 text-center">
+          <div className="rounded-lg bg-panel-elevated p-2 text-center">
             <p className="font-mono text-sm font-bold">{data.momentum.rsi_14}</p>
             <p className="text-[10px] text-muted">RSI (14)</p>
           </div>
-          <div className="rounded-lg bg-white/[0.03] p-2 text-center">
+          <div className="rounded-lg bg-panel-elevated p-2 text-center">
             <p className={cn(
               "font-mono text-sm font-bold",
               data.momentum.roc_10d >= 0 ? "text-positive" : "text-negative"
@@ -92,7 +92,7 @@ export function TrendAnalysisCard({ data, isLoading }: TrendAnalysisCardProps) {
             </p>
             <p className="text-[10px] text-muted">ROC (10D)</p>
           </div>
-          <div className="rounded-lg bg-white/[0.03] p-2 text-center">
+          <div className="rounded-lg bg-panel-elevated p-2 text-center">
             <p className={cn(
               "font-mono text-sm font-bold",
               data.momentum.momentum_score >= 0 ? "text-positive" : "text-negative"
@@ -127,7 +127,7 @@ export function TrendAnalysisCard({ data, isLoading }: TrendAnalysisCardProps) {
         <p className="mb-2 text-[10px] font-medium uppercase text-muted">Pivot Points</p>
         <div className="grid grid-cols-3 gap-1.5 text-center">
           {Object.entries(data.support_resistance).map(([key, value]) => (
-            <div key={key} className="rounded bg-white/[0.03] py-1.5">
+            <div key={key} className="rounded bg-panel-elevated py-1.5">
               <p className="text-[9px] uppercase text-muted">{key}</p>
               <p className="font-mono text-[10px] font-bold">${value.toFixed(2)}</p>
             </div>

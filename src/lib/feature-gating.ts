@@ -111,7 +111,7 @@ export function checkFeatureAccess(
  */
 export function getTierInfo(tier: SubscriptionTier) {
   const info = {
-    FREE: { label: "Free", color: "text-muted", bgColor: "bg-white/[0.05]" },
+    FREE: { label: "Free", color: "text-muted", bgColor: "bg-panel-elevated" },
     PRO: { label: "Pro", color: "text-cyan", bgColor: "bg-cyan/10" },
     ELITE: { label: "Elite", color: "text-purple", bgColor: "bg-purple/10" },
     ENTERPRISE: { label: "Enterprise", color: "text-amber", bgColor: "bg-amber/10" },

@@ -157,22 +157,22 @@ export default function MarketPage() {
 
       {/* Sector Table */}
       <GlassCard padding="none">
-        <div className="border-b border-white/[0.06] px-4 py-3">
+        <div className="border-b border-border px-4 py-3">
           <h2 className="font-display text-sm font-semibold">All Sectors</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-white/[0.04] text-left text-xs uppercase text-muted">
+              <tr className="border-b border-border text-left text-xs uppercase text-muted">
                 <th className="px-4 py-2 font-medium">Sector</th>
                 <th className="px-4 py-2 text-right font-medium">Mkt Cap</th>
                 <th className="px-4 py-2 text-right font-medium">Day Change</th>
                 <th className="px-4 py-2 text-right font-medium">Performance</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody className="divide-y divide-border">
               {sectors.map((s) => (
-                <tr key={s.name} className="hover:bg-white/[0.02]">
+                <tr key={s.name} className="hover:bg-panel">
                   <td className="px-4 py-2.5 font-medium">{s.name}</td>
                   <td className="px-4 py-2.5 text-right font-mono">
                     {s.marketCap >= 1000 ? `$${(s.marketCap / 1000).toFixed(1)}T` : `$${s.marketCap}B`}
@@ -187,7 +187,7 @@ export default function MarketPage() {
                     {s.changePercent.toFixed(2)}%
                   </td>
                   <td className="px-4 py-2.5 text-right">
-                    <div className="ml-auto h-1.5 w-24 rounded-full bg-white/[0.05]">
+                    <div className="ml-auto h-1.5 w-24 rounded-full bg-panel-elevated">
                       <div
                         className={cn(
                           "h-1.5 rounded-full",
@@ -212,18 +212,18 @@ export default function MarketPage() {
           { title: "Most Active", icon: Activity, data: mostActive, color: "text-cyan" },
         ].map((section) => (
           <GlassCard key={section.title} padding="none">
-            <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div className="flex items-center gap-2">
                 <section.icon className={cn("h-4 w-4", section.color)} />
                 <h2 className="font-display text-sm font-semibold">{section.title}</h2>
               </div>
             </div>
-            <div className="divide-y divide-white/[0.04]">
+            <div className="divide-y divide-border">
               {section.data.map((stock) => (
                 <Link
                   key={stock.ticker}
                   href={`/stock/${stock.ticker}`}
-                  className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/[0.02]"
+                  className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-panel"
                 >
                   <div className="flex-1">
                     <p className="font-mono text-xs font-bold">{stock.ticker}</p>
@@ -258,13 +258,13 @@ export default function MarketPage() {
 
       {/* Full Stock Table */}
       <GlassCard padding="none">
-        <div className="border-b border-white/[0.06] px-4 py-3">
+        <div className="border-b border-border px-4 py-3">
           <h2 className="font-display text-sm font-semibold">All Stocks</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-white/[0.04] text-left text-xs uppercase text-muted">
+              <tr className="border-b border-border text-left text-xs uppercase text-muted">
                 <th className="px-4 py-2 font-medium">Ticker</th>
                 <th className="px-4 py-2 font-medium">Company</th>
                 <th className="px-4 py-2 font-medium">Sector</th>
@@ -273,9 +273,9 @@ export default function MarketPage() {
                 <th className="px-4 py-2 text-right font-medium">Trend</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody className="divide-y divide-border">
               {stocks.map((stock) => (
-                <tr key={stock.ticker} className="hover:bg-white/[0.02]">
+                <tr key={stock.ticker} className="hover:bg-panel">
                   <td className="px-4 py-2.5">
                     <Link href={`/stock/${stock.ticker}`} className="font-mono font-bold hover:text-accent">
                       {stock.ticker}

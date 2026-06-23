@@ -156,7 +156,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Watchlist Hub — 2 cols */}
         <GlassCard className="lg:col-span-2" padding="none">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div className="flex items-center gap-2">
               <Star className="h-4 w-4 text-accent" />
               <h2 className="font-display text-sm font-semibold">Watchlist</h2>
@@ -165,12 +165,12 @@ export default function DashboardPage() {
               View all <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="divide-y divide-white/[0.04]">
+          <div className="divide-y divide-border">
             {stocks.map((stock) => (
               <Link
                 key={stock.ticker}
                 href={`/stock/${stock.ticker}`}
-                className="flex items-center gap-2 px-3 py-2.5 transition-colors hover:bg-white/[0.02] sm:gap-4 sm:px-4 sm:py-3"
+                className="flex items-center gap-2 px-3 py-2.5 transition-colors hover:bg-panel sm:gap-4 sm:px-4 sm:py-3"
               >
                 <div className="w-14 sm:w-20">
                   <p className="font-mono text-xs font-bold">{stock.ticker}</p>
@@ -203,7 +203,7 @@ export default function DashboardPage() {
 
         {/* AI Predictions */}
         <GlassCard padding="none">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div className="flex items-center gap-2">
               <Brain className="h-4 w-4 text-cyan" />
               <h2 className="font-display text-sm font-semibold">AI Predictions</h2>
@@ -212,7 +212,7 @@ export default function DashboardPage() {
               All <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="divide-y divide-white/[0.04]">
+          <div className="divide-y divide-border">
             {predictions.map((pred) => (
               <div key={pred.ticker} className="px-3 py-2.5 sm:px-4 sm:py-3">
                 <div className="flex items-center justify-between">
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                     {formatCurrency(pred.price)}
                   </span>
                 </div>
-                <div className="mt-1.5 h-1 w-full rounded-full bg-white/[0.05]">
+                <div className="mt-1.5 h-1 w-full rounded-full bg-panel-elevated">
                   <div
                     className={cn(
                       "h-1 rounded-full",
@@ -265,10 +265,10 @@ export default function DashboardPage() {
 
       {/* Recent Activity */}
       <GlassCard padding="none">
-        <div className="border-b border-white/[0.06] px-4 py-3">
+        <div className="border-b border-border px-4 py-3">
           <h2 className="font-display text-sm font-semibold">Activity</h2>
         </div>
-        <div className="divide-y divide-white/[0.04]">
+        <div className="divide-y divide-border">
           {recentActivity.map((item, i) => (
             <div key={i} className="flex items-start gap-3 px-4 py-3">
               <div className={cn("mt-0.5", item.color)}>

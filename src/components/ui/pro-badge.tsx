@@ -8,7 +8,7 @@ interface ProBadgeProps {
 }
 
 const tierStyles: Record<SubscriptionTier, string> = {
-  FREE: "bg-white/5 text-muted border-white/10",
+  FREE: "bg-white/5 text-muted border-border",
   PRO: "bg-cyan/10 text-cyan border-cyan/20",
   ELITE: "bg-purple/10 text-purple border-purple/20",
   ENTERPRISE: "bg-amber/10 text-amber border-amber/20",

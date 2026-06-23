@@ -179,7 +179,7 @@ export default function StockDetailPage() {
         <div className="flex flex-wrap items-start gap-3 sm:items-center sm:gap-4">
           <Link
             href="/dashboard"
-            className="rounded-lg p-2 text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground"
+            className="rounded-lg p-2 text-muted transition-colors hover:bg-panel-elevated hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -193,7 +193,7 @@ export default function StockDetailPage() {
             <p className="text-xs text-muted sm:text-sm">{stock.name}</p>
           </div>
           <div className="text-right ml-auto animate-pulse">
-            <div className="h-8 w-32 rounded bg-white/[0.05] sm:h-10 sm:w-40" />
+            <div className="h-8 w-32 rounded bg-panel-elevated sm:h-10 sm:w-40" />
           </div>
         </div>
         <GlassCard>
@@ -212,7 +212,7 @@ export default function StockDetailPage() {
       <div className="flex flex-wrap items-start gap-3 sm:items-center sm:gap-4">
         <Link
           href="/dashboard"
-          className="rounded-lg p-2 text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground"
+          className="rounded-lg p-2 text-muted transition-colors hover:bg-panel-elevated hover:text-foreground"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
@@ -228,7 +228,7 @@ export default function StockDetailPage() {
         <div className="text-right ml-auto">
           {isPriceLoading ? (
             <div className="animate-pulse">
-              <div className="h-8 w-32 rounded bg-white/[0.05] sm:h-10 sm:w-40 ml-auto" />
+              <div className="h-8 w-32 rounded bg-panel-elevated sm:h-10 sm:w-40 ml-auto" />
             </div>
           ) : (
             <>
@@ -259,7 +259,7 @@ export default function StockDetailPage() {
         <div className="flex items-center gap-2 sm:gap-4">
           <span className="text-[10px] text-muted sm:text-xs">52W Low</span>
           <div className="relative flex-1">
-            <div className="h-1.5 w-full rounded-full bg-white/[0.05]">
+            <div className="h-1.5 w-full rounded-full bg-panel-elevated">
               <div
                 className="h-1.5 rounded-full bg-gradient-to-r from-negative via-accent to-positive"
                 style={{ width: `${pricePosition}%` }}
@@ -313,7 +313,7 @@ export default function StockDetailPage() {
         {/* Charts Tab */}
         <TabsContent value="charts" className="space-y-4">
           <GlassCard padding="none">
-            <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2 sm:px-4 sm:py-3">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2 sm:px-4 sm:py-3">
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-accent" />
                 <h2 className="font-display text-sm font-semibold">Price Chart</h2>
@@ -336,7 +336,7 @@ export default function StockDetailPage() {
           </GlassCard>
 
           <GlassCard padding="none">
-            <div className="border-b border-white/[0.06] px-4 py-3">
+            <div className="border-b border-border px-4 py-3">
               <h2 className="font-display text-sm font-semibold">Volume</h2>
             </div>
             <VolumeChart
@@ -383,7 +383,7 @@ export default function StockDetailPage() {
             </div>
           ) : (
             <GlassCard className="flex flex-col items-center justify-center py-12">
-              <Brain className="mb-4 h-12 w-12 text-muted/30" />
+              <Brain className="mb-4 h-12 w-12 text-muted" />
               <p className="text-sm text-muted">
                 Unable to generate predictions. Please try again.
               </p>

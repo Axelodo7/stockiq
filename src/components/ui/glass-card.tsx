@@ -16,13 +16,6 @@ const paddingMap = {
   lg: "p-6",
 };
 
-const gradientMap = {
-  brand: "before:from-cyan/20 before:to-purple/20",
-  success: "before:from-green/20 before:to-cyan/20",
-  danger: "before:from-red/20 before:to-amber/20",
-  amber: "before:from-amber/20 before:to-red/20",
-};
-
 export function GlassCard({
   children,
   className,
@@ -35,25 +28,15 @@ export function GlassCard({
     <div
       onClick={onClick}
       className={cn(
-        "glass relative overflow-hidden",
+        "rounded-xl border border-border bg-panel",
         paddingMap[padding],
-        hover && "cursor-pointer transition-all duration-200 hover:border-white/10 hover:bg-white/[0.03]",
-        gradient && "gradient-border",
+        hover && "cursor-pointer transition-colors duration-150 hover:border-accent/30",
+        gradient && "border-accent/20",
         onClick && "cursor-pointer",
         className
       )}
     >
-      {gradient && (
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300",
-            "bg-gradient-to-br",
-            gradientMap[gradient],
-            "group-hover:opacity-100"
-          )}
-        />
-      )}
-      <div className="relative z-10">{children}</div>
+      <div className="relative">{children}</div>
     </div>
   );
 }

@@ -70,26 +70,26 @@ export function Sidebar() {
   const navContent = (
     <>
       {/* Logo */}
-      <div className="flex h-16 items-center justify-between px-4">
+      <div className="flex h-16 items-center justify-between px-4 border-b border-border">
         {sidebarOpen ? (
           <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-cyan to-purple">
-              <TrendingUp className="h-4 w-4 text-foreground" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent">
+              <TrendingUp className="h-4 w-4 text-accent-fg" />
             </div>
-            <span className="font-display text-lg font-bold gradient-text">StockIQ</span>
+            <span className="font-display text-lg font-bold text-foreground">StockIQ</span>
           </Link>
         ) : (
           <Link
             href="/dashboard"
-            className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-cyan to-purple"
+            className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-accent"
           >
-            <TrendingUp className="h-4 w-4 text-foreground" />
+            <TrendingUp className="h-4 w-4 text-accent-fg" />
           </Link>
         )}
         {/* Desktop collapse toggle */}
         <button
           onClick={toggleSidebar}
-          className="hidden rounded-lg p-1.5 text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground lg:flex"
+          className="hidden rounded-lg p-1.5 text-muted transition-colors hover:bg-panel-elevated hover:text-foreground lg:flex"
         >
           <ChevronLeft
             className={cn("h-4 w-4 transition-transform", !sidebarOpen && "rotate-180")}
@@ -98,7 +98,7 @@ export function Sidebar() {
         {/* Mobile close button */}
         <button
           onClick={toggleSidebar}
-          className="rounded-lg p-1.5 text-muted transition-colors hover:bg-white/[0.05] hover:text-foreground lg:hidden"
+          className="rounded-lg p-1.5 text-muted transition-colors hover:bg-panel-elevated hover:text-foreground lg:hidden"
         >
           <X className="h-4 w-4" />
         </button>
@@ -109,7 +109,7 @@ export function Sidebar() {
         {navSections.map((section) => (
           <div key={section.label} className="mb-4">
             {sidebarOpen && (
-              <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted/60">
+              <p className="mb-1.5 px-3 text-xs font-medium text-muted">
                 {section.label}
               </p>
             )}
@@ -121,22 +121,21 @@ export function Sidebar() {
                     key={item.href}
                     href={item.href}
                     onClick={() => {
-                      // Auto-close sidebar on mobile after navigation
                       if (window.innerWidth < 1024 && sidebarOpen) {
                         toggleSidebar();
                       }
                     }}
                     className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
+                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150",
                       isActive
-                        ? "bg-accent/10 text-accent glow-border"
-                        : "text-muted hover:bg-white/[0.04] hover:text-foreground"
+                        ? "bg-accent/10 text-accent"
+                        : "text-muted hover:bg-panel-elevated hover:text-foreground"
                     )}
                     title={!sidebarOpen ? item.label : undefined}
                   >
                     <item.icon
                       className={cn(
-                        "h-4.5 w-4.5 shrink-0 transition-colors",
+                        "h-4 w-4 shrink-0 transition-colors",
                         isActive ? "text-accent" : "text-muted group-hover:text-foreground"
                       )}
                     />
@@ -151,14 +150,14 @@ export function Sidebar() {
 
       {/* User section at bottom */}
       {sidebarOpen && (
-        <div className="border-t border-white/[0.06] p-3">
+        <div className="border-t border-border p-3">
           <div className="flex items-center gap-3 rounded-lg px-3 py-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-cyan/20 to-purple/20 text-xs font-bold text-accent">
-              A
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-panel-elevated text-xs font-bold text-accent">
+              {user?.firstName?.[0] || user?.username?.[0] || "U"}
             </div>
             <div className="flex-1 overflow-hidden">
-              <p className="truncate text-xs font-medium">{tierLabel}</p>
-              <p className="truncate text-[10px] text-muted">{watchlistLimit} watchlists</p>
+              <p className="truncate text-xs font-medium text-foreground">{tierLabel}</p>
+              <p className="truncate text-xs text-muted">{watchlistLimit} watchlists</p>
             </div>
           </div>
         </div>
@@ -171,25 +170,25 @@ export function Sidebar() {
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
           onClick={toggleSidebar}
         />
       )}
 
-      {/* Desktop sidebar — always visible, collapses to icons */}
+      {/* Desktop sidebar */}
       <aside
         className={cn(
-          "glass-strong fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-white/[0.06] transition-all duration-300 lg:flex",
+          "fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-border bg-panel transition-all duration-200 lg:flex",
           sidebarOpen ? "w-64" : "w-[72px]"
         )}
       >
         {navContent}
       </aside>
 
-      {/* Mobile sidebar — overlay drawer, always expanded */}
+      {/* Mobile sidebar */}
       <aside
         className={cn(
-          "glass-strong fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-white/[0.06] transition-transform duration-300 lg:hidden",
+          "fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-panel transition-transform duration-200 lg:hidden",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

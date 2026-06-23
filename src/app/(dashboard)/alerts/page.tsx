@@ -114,7 +114,7 @@ export default function AlertsPage() {
               padding="none"
               className={cn(!alert.isActive && "opacity-50")}
             >
-              <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+              <div className="flex items-center justify-between border-b border-border px-4 py-3">
                 <div className="flex items-center gap-2">
                   <Icon className={cn("h-4 w-4", config.color)} />
                   <span className="font-mono text-xs font-bold">{alert.ticker}</span>
@@ -165,7 +165,7 @@ export default function AlertsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 border-t border-white/[0.04] px-4 py-2">
+              <div className="flex items-center gap-2 border-t border-border px-4 py-2">
                 {alert.triggeredAt ? (
                   <>
                     <Zap className="h-3 w-3 text-amber" />
@@ -186,11 +186,11 @@ export default function AlertsPage() {
       {/* Recent Triggered Timeline */}
       {triggeredAlerts.length > 0 && (
         <GlassCard padding="none">
-          <div className="flex items-center gap-2 border-b border-white/[0.06] px-4 py-3">
+          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
             <Zap className="h-4 w-4 text-amber" />
             <h2 className="font-display text-sm font-semibold">Recently Triggered</h2>
           </div>
-          <div className="divide-y divide-white/[0.04]">
+          <div className="divide-y divide-border">
             {triggeredAlerts.map((alert) => (
               <div key={alert.id} className="flex items-center gap-3 px-4 py-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber/10">
