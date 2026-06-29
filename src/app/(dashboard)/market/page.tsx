@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { GlowBadge } from "@/components/ui/glow-badge";
+import { Badge } from "@/components/ui/badge";
 import { MiniSparkline } from "@/components/charts/mini-sparkline";
 import { HeatmapGrid } from "@/components/charts/heatmap-grid";
 import { SectorMap } from "@/components/charts/sector-map";
@@ -114,7 +115,7 @@ export default function MarketPage() {
           </h1>
           <p className="mt-1 text-xs text-muted sm:text-sm">Indices, sectors, and market-wide performance</p>
         </div>
-        <GlowBadge variant="success" glow>Market Open</GlowBadge>
+        <GlowBadge variant="success">Market Open</GlowBadge>
       </div>
 
       {/* Indices Grid */}

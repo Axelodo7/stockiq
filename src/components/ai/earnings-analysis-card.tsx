@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { GlowBadge } from "@/components/ui/glow-badge";
+import { Badge } from "@/components/ui/badge";
 import type { EarningsAnalysis } from "@/lib/services/python-client";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -44,7 +45,7 @@ export function EarningsAnalysisCard({ data, isLoading }: EarningsAnalysisCardPr
           <h3 className="font-display text-sm font-semibold">Earnings Analysis</h3>
         </div>
         {data.expectations.beat !== null && (
-          <GlowBadge variant={data.expectations.beat ? "success" : "danger"} glow>
+          <GlowBadge variant={data.expectations.beat ? "success" : "danger"}>
             {data.expectations.beat ? "Beat" : "Miss"}
           </GlowBadge>
         )}

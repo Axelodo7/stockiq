@@ -1,20 +1,15 @@
 import type { MarketQuote, OHLCV, Stock } from "@/types";
 import { cache, buildCacheKey, getCacheTtl } from "./cache";
 import { CACHE_TTL } from "@/lib/constants";
-import { sleep, seededRandom } from "@/lib/utils";
+import { seededRandom } from "@/lib/utils";
 import { getStockInfo } from "./market-mock";
-
-const ALPACA_KEY = process.env.ALPACA_API_KEY || "";
-const ALPACA_SECRET = process.env.ALPACA_SECRET_KEY || "";
-const ALPACA_DATA_BASE = "https://data.alpaca.markets";
-
-function alpacaHeaders() {
-  return {
-    "APCA-API-KEY-ID": ALPACA_KEY,
-    "APCA-API-SECRET-KEY": ALPACA_SECRET,
-    Accept: "application/json",
-  };
-}
+import {
+  hasAlpacaCredentials,
+  fetchAlpacaBars,
+  fetchYahooBars,
+  ALPACA_BASE,
+  alpacaHeaders,
+} from "./market-api";
 
 class MarketDataService {
   private requestCount = 0;
@@ -30,7 +25,7 @@ class MarketDataService {
       this.lastReset = now;
     }
     if (this.requestCount >= 200) {
-      await sleep(60_000 - (now - this.lastReset));
+      await new Promise((r) => setTimeout(r, 60_000 - (now - this.lastReset)));
       this.requestCount = 0;
       this.lastReset = Date.now();
     }
@@ -39,49 +34,23 @@ class MarketDataService {
   }
 
   private getAlpacaTimeframe(range: string): string {
-    const map: Record<string, string> = {
-      "1D": "1Day",
-      "5D": "1Day",
-      "1M": "1Day",
-      "3M": "1Day",
-      "6M": "1Day",
-      "1Y": "1Day",
-      "5Y": "1Week",
-      MAX: "1Month",
-    };
-    return map[range] || "1Day";
+    if (range === "5Y") return "1Week";
+    if (range === "MAX") return "1Month";
+    return "1Day";
   }
 
   private getStartDate(range: string): string {
-    const now = new Date();
-    const d = new Date(now);
+    const d = new Date();
     switch (range) {
-      case "1D":
-        d.setDate(d.getDate() - 1);
-        break;
-      case "5D":
-        d.setDate(d.getDate() - 7);
-        break;
-      case "1M":
-        d.setMonth(d.getMonth() - 1);
-        break;
-      case "3M":
-        d.setMonth(d.getMonth() - 3);
-        break;
-      case "6M":
-        d.setMonth(d.getMonth() - 6);
-        break;
-      case "1Y":
-        d.setFullYear(d.getFullYear() - 1);
-        break;
-      case "5Y":
-        d.setFullYear(d.getFullYear() - 5);
-        break;
-      case "MAX":
-        d.setFullYear(d.getFullYear() - 16);
-        break;
-      default:
-        d.setFullYear(d.getFullYear() - 1);
+      case "1D": d.setDate(d.getDate() - 1); break;
+      case "5D": d.setDate(d.getDate() - 7); break;
+      case "1M": d.setMonth(d.getMonth() - 1); break;
+      case "3M": d.setMonth(d.getMonth() - 3); break;
+      case "6M": d.setMonth(d.getMonth() - 6); break;
+      case "1Y": d.setFullYear(d.getFullYear() - 1); break;
+      case "5Y": d.setFullYear(d.getFullYear() - 5); break;
+      case "MAX": d.setFullYear(d.getFullYear() - 16); break;
+      default: d.setFullYear(d.getFullYear() - 1);
     }
     return d.toISOString().split("T")[0];
   }
@@ -91,10 +60,10 @@ class MarketDataService {
     const cached = cache.get<MarketQuote>(cacheKey);
     if (cached) return cached;
 
-    // Try Alpaca first
-    if (ALPACA_KEY) {
+    // Try Alpaca
+    if (hasAlpacaCredentials()) {
       try {
-        const url = `${ALPACA_DATA_BASE}/v2/stocks/${encodeURIComponent(ticker)}/snapshot`;
+        const url = `${ALPACA_BASE}/v2/stocks/${encodeURIComponent(ticker)}/snapshot`;
         const res = await this.rateLimitedFetch(url);
         if (res.ok) {
           const snap = await res.json();
@@ -120,119 +89,80 @@ class MarketDataService {
                 previousClose: Math.round(previousClose * 100) / 100,
                 timestamp: Math.floor(Date.now() / 1000),
               };
-
               cache.set(cacheKey, quote, getCacheTtl("QUOTE"));
               return quote;
             }
           }
         }
-      } catch {
-        // Fall through to Yahoo
-      }
+      } catch { /* fall through to Yahoo */ }
     }
 
-    // Yahoo Finance fallback
-    const yahooQuote = await this.fetchYahooQuote(ticker);
-    if (yahooQuote) {
-      cache.set(cacheKey, yahooQuote, getCacheTtl("QUOTE"));
-      return yahooQuote;
-    }
-
-    // Final fallback: mock
-    return this.getMockQuote(ticker);
-  }
-
-  private async fetchYahooQuote(ticker: string): Promise<MarketQuote | null> {
+    // Yahoo fallback
     try {
       const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`;
       const res = await fetch(url, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-        },
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
         signal: AbortSignal.timeout(8000),
       });
-      if (!res.ok) return null;
+      if (res.ok) {
+        const data = await res.json();
+        const meta = data?.chart?.result?.[0]?.meta;
+        if (meta?.regularMarketPrice) {
+          const price = meta.regularMarketPrice;
+          const previousClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
+          const change = price - previousClose;
+          const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
 
-      const data = await res.json();
-      const meta = data?.chart?.result?.[0]?.meta;
-      if (!meta) return null;
+          const quote: MarketQuote = {
+            ticker: ticker.toUpperCase(),
+            currentPrice: Math.round(price * 100) / 100,
+            change: Math.round(change * 100) / 100,
+            changePercent: Math.round(changePercent * 100) / 100,
+            open: Math.round((meta.regularMarketOpen ?? price) * 100) / 100,
+            high: Math.round((meta.regularMarketDayHigh ?? price) * 100) / 100,
+            low: Math.round((meta.regularMarketDayLow ?? price) * 100) / 100,
+            volume: meta.regularMarketVolume ?? 0,
+            previousClose: Math.round(previousClose * 100) / 100,
+            timestamp: Math.floor(Date.now() / 1000),
+          };
+          cache.set(cacheKey, quote, getCacheTtl("QUOTE"));
+          return quote;
+        }
+      }
+    } catch { /* ignore */ }
 
-      const price = meta.regularMarketPrice ?? 0;
-      if (!price) return null;
-
-      const previousClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
-      const change = price - previousClose;
-      const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
-
-      return {
-        ticker: ticker.toUpperCase(),
-        currentPrice: Math.round(price * 100) / 100,
-        change: Math.round(change * 100) / 100,
-        changePercent: Math.round(changePercent * 100) / 100,
-        open: Math.round((meta.regularMarketOpen ?? price) * 100) / 100,
-        high: Math.round((meta.regularMarketDayHigh ?? price) * 100) / 100,
-        low: Math.round((meta.regularMarketDayLow ?? price) * 100) / 100,
-        volume: meta.regularMarketVolume ?? 0,
-        previousClose: Math.round(previousClose * 100) / 100,
-        timestamp: Math.floor(Date.now() / 1000),
-      };
-    } catch {
-      return null;
-    }
+    // Mock fallback
+    return this.getMockQuote(ticker);
   }
 
-  async getHistoricalData(
-    ticker: string,
-    range: string = "1y"
-  ): Promise<OHLCV[]> {
+  async getHistoricalData(ticker: string, range: string = "1y"): Promise<OHLCV[]> {
     const cacheKey = buildCacheKey("history", ticker, range);
     const cached = cache.get<OHLCV[]>(cacheKey);
     if (cached) return cached;
 
-    // Try Alpaca first
-    if (ALPACA_KEY) {
-      try {
-        const alpacaRange = range.toUpperCase();
-        const timeframe = this.getAlpacaTimeframe(alpacaRange);
-        const start = this.getStartDate(alpacaRange);
+    const alpacaRange = range.toUpperCase();
 
-        const url = `${ALPACA_DATA_BASE}/v2/stocks/${encodeURIComponent(
-          ticker
-        )}/bars?timeframe=${timeframe}&start=${start}&limit=10000&adjustment=split&feed=iex`;
-        const res = await this.rateLimitedFetch(url);
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.bars && data.bars.length > 0) {
-            const ohlcv: OHLCV[] = data.bars.map(
-              (bar: { t: string; o: number; h: number; l: number; c: number; v: number }) => ({
-                date: bar.t.split("T")[0],
-                open: bar.o,
-                high: bar.h,
-                low: bar.l,
-                close: bar.c,
-                volume: bar.v,
-              })
-            );
-
-            cache.set(cacheKey, ohlcv, getCacheTtl("HISTORICAL"));
-            return ohlcv;
-          }
-        }
-      } catch {
-        // Fall through to Yahoo
+    // Try Alpaca
+    if (hasAlpacaCredentials()) {
+      const bars = await fetchAlpacaBars(
+        ticker,
+        this.getAlpacaTimeframe(alpacaRange),
+        this.getStartDate(alpacaRange)
+      );
+      if (bars.length > 0) {
+        cache.set(cacheKey, bars, getCacheTtl("HISTORICAL"));
+        return bars;
       }
     }
 
-    // Yahoo Finance fallback
-    const yahooData = await this.fetchYahooHistorical(ticker, range);
-    if (yahooData.length > 0) {
-      cache.set(cacheKey, yahooData, getCacheTtl("HISTORICAL"));
-      return yahooData;
+    // Yahoo fallback
+    const yahooBars = await fetchYahooBars(ticker, alpacaRange);
+    if (yahooBars.length > 0) {
+      cache.set(cacheKey, yahooBars, getCacheTtl("HISTORICAL"));
+      return yahooBars;
     }
 
-    // Final fallback: mock
+    // Mock fallback
     const mockPrice = getStockInfo(ticker).price;
     if (!mockPrice) return [];
     const ohlcv = this.generateMockHistoricalData(ticker, range, mockPrice);
@@ -240,106 +170,38 @@ class MarketDataService {
     return ohlcv;
   }
 
-  private async fetchYahooHistorical(
-    ticker: string,
-    range: string
-  ): Promise<OHLCV[]> {
-    const rangeMap: Record<string, string> = {
-      "1D": "1d",
-      "5D": "5d",
-      "1M": "1mo",
-      "3M": "3mo",
-      "6M": "6mo",
-      "1Y": "1y",
-      "5Y": "5y",
-      MAX: "max",
-    };
-    const yahooRange = rangeMap[range] || "1y";
-
-    try {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
-        ticker
-      )}?range=${yahooRange}&interval=1d`;
-      const res = await fetch(url, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-        },
-        signal: AbortSignal.timeout(12000),
-      });
-      if (!res.ok) return [];
-
-      const data = await res.json();
-      const result = data?.chart?.result?.[0];
-      if (!result) return [];
-
-      const timestamps = result.timestamp as number[];
-      const ohlcvData = result.indicators?.quote?.[0];
-      if (!timestamps || !ohlcvData) return [];
-
-      const ohlcv: OHLCV[] = [];
-      for (let i = 0; i < timestamps.length; i++) {
-        const o = ohlcvData.open[i];
-        const h = ohlcvData.high[i];
-        const l = ohlcvData.low[i];
-        const c = ohlcvData.close[i];
-        const v = ohlcvData.volume[i];
-        if (o == null || h == null || l == null || c == null) continue;
-
-        const date = new Date(timestamps[i] * 1000)
-          .toISOString()
-          .split("T")[0];
-        ohlcv.push({
-          date,
-          open: o,
-          high: h,
-          low: l,
-          close: c,
-          volume: v ?? 0,
-        });
-      }
-
-      return ohlcv;
-    } catch {
-      return [];
-    }
-  }
-
   async searchStocks(query: string): Promise<Stock[]> {
     const cacheKey = buildCacheKey("search", query);
     const cached = cache.get<Stock[]>(cacheKey);
     if (cached) return cached;
 
-    if (!ALPACA_KEY) return this.getMockStocks(query);
-
-    try {
-      const url = `${ALPACA_DATA_BASE}/v1beta1/us/search?symbol=${encodeURIComponent(query)}&limit=20`;
-      const res = await this.rateLimitedFetch(url);
-
-      if (res.ok) {
-        const data = await res.json();
-        const stocks: Stock[] = (data.symbol || [])
-          .slice(0, 20)
-          .map((item: { symbol: string; name?: string; type?: string; exchange?: string }) => ({
-            id: item.symbol,
-            ticker: item.symbol,
-            companyName: item.name || item.symbol,
-            sector: item.type || "Unknown",
-            marketCap: null,
-            exchange: item.exchange || "NASDAQ",
-          }));
-
-        cache.set(cacheKey, stocks, CACHE_TTL.STOCK_LIST);
-        return stocks;
-      }
-    } catch {
-      // Fall through to mock
+    // Try Alpaca
+    if (hasAlpacaCredentials()) {
+      try {
+        const url = `${ALPACA_BASE}/v1beta1/us/search?symbol=${encodeURIComponent(query)}&limit=20`;
+        const res = await this.rateLimitedFetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          const stocks: Stock[] = (data.symbol || [])
+            .slice(0, 20)
+            .map((item: { symbol: string; name?: string; type?: string; exchange?: string }) => ({
+              id: item.symbol,
+              ticker: item.symbol,
+              companyName: item.name || item.symbol,
+              sector: item.type || "Unknown",
+              marketCap: null,
+              exchange: item.exchange || "NASDAQ",
+            }));
+          cache.set(cacheKey, stocks, CACHE_TTL.STOCK_LIST);
+          return stocks;
+        }
+      } catch { /* fall through to mock */ }
     }
 
     return this.getMockStocks(query);
   }
 
-  private async getMockQuote(ticker: string): Promise<MarketQuote | null> {
+  private getMockQuote(ticker: string): MarketQuote | null {
     const mockPrice = getStockInfo(ticker).price;
     if (!mockPrice) return null;
     const change = (Math.random() - 0.5) * 10;
@@ -357,20 +219,9 @@ class MarketDataService {
     };
   }
 
-  private generateMockHistoricalData(
-    ticker: string,
-    range: string,
-    basePrice?: number
-  ): OHLCV[] {
+  private generateMockHistoricalData(ticker: string, range: string, basePrice?: number): OHLCV[] {
     const days: Record<string, number> = {
-      "1D": 1,
-      "5D": 5,
-      "1M": 30,
-      "3M": 90,
-      "6M": 180,
-      "1Y": 365,
-      "5Y": 1825,
-      MAX: 3650,
+      "1D": 1, "5D": 5, "1M": 30, "3M": 90, "6M": 180, "1Y": 365, "5Y": 1825, MAX: 3650,
     };
     const numDays = days[range] || 365;
     const data: OHLCV[] = [];
@@ -426,7 +277,7 @@ class MarketDataService {
       { id: "AMZN", ticker: "AMZN", companyName: "Amazon.com Inc.", sector: "Consumer Cyclical", marketCap: 1900000000000, exchange: "NASDAQ" },
       { id: "TSLA", ticker: "TSLA", companyName: "Tesla Inc.", sector: "Consumer Cyclical", marketCap: 560000000000, exchange: "NASDAQ" },
       { id: "NVDA", ticker: "NVDA", companyName: "NVIDIA Corporation", sector: "Technology", marketCap: 3200000000000, exchange: "NASDAQ" },
-      { id: "META", ticker: "META", companyName: "Meta Platforms Inc.", sector: "Communication Services", marketCap: 1300000000000, exchange: "NASDAQ" },
+      { id: "META", ticker: "META", companyName: "Meta Platforms Inc.", sector: "Technology", marketCap: 1300000000000, exchange: "NASDAQ" },
       { id: "JPM", ticker: "JPM", companyName: "JPMorgan Chase & Co.", sector: "Financial Services", marketCap: 570000000000, exchange: "NYSE" },
       { id: "V", ticker: "V", companyName: "Visa Inc.", sector: "Financial Services", marketCap: 550000000000, exchange: "NYSE" },
       { id: "JNJ", ticker: "JNJ", companyName: "Johnson & Johnson", sector: "Healthcare", marketCap: 390000000000, exchange: "NYSE" },
@@ -440,6 +291,3 @@ class MarketDataService {
 }
 
 export const marketDataService = new MarketDataService();
-
-const CACHE_TTL_KEYS = CACHE_TTL;
-export { CACHE_TTL_KEYS as CACHE_TTL_CONST };

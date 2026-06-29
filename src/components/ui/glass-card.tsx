@@ -4,7 +4,6 @@ interface GlassCardProps {
   children: React.ReactNode;
   className?: string;
   hover?: boolean;
-  gradient?: "brand" | "success" | "danger" | "amber" | null;
   padding?: "none" | "sm" | "md" | "lg";
   onClick?: () => void;
 }
@@ -20,7 +19,6 @@ export function GlassCard({
   children,
   className,
   hover = false,
-  gradient = null,
   padding = "md",
   onClick,
 }: GlassCardProps) {
@@ -31,7 +29,6 @@ export function GlassCard({
         "rounded-xl border border-border bg-panel",
         paddingMap[padding],
         hover && "cursor-pointer transition-colors duration-150 hover:border-accent/30",
-        gradient && "border-accent/20",
         onClick && "cursor-pointer",
         className
       )}

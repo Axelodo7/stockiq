@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { GlowBadge } from "@/components/ui/glow-badge";
+import { Badge } from "@/components/ui/badge";
 import { MiniSparkline } from "@/components/charts/mini-sparkline";
 import { formatCurrency, cn, seededRandom } from "@/lib/utils";
 
@@ -87,7 +88,7 @@ export default function EarningsPage() {
           <p className="mt-1 text-xs text-muted sm:text-sm">Upcoming and recent earnings reports</p>
         </div>
         <div className="flex items-center gap-2">
-          <GlowBadge variant="info" glow>{upcoming.length} upcoming</GlowBadge>
+          <GlowBadge variant="info">{upcoming.length} upcoming</GlowBadge>
         </div>
       </div>
 

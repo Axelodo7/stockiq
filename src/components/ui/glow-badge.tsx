@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 interface GlowBadgeProps {
   children: React.ReactNode;
   variant?: "default" | "success" | "danger" | "warning" | "info" | "purple";
-  glow?: boolean;
   className?: string;
 }
 
@@ -19,7 +18,6 @@ const variantStyles = {
 export function GlowBadge({
   children,
   variant = "default",
-  glow = false,
   className,
 }: GlowBadgeProps) {
   return (

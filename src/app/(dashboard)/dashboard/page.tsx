@@ -17,6 +17,7 @@ import {
 import { GlassCard } from "@/components/ui/glass-card";
 import { MetricGlass } from "@/components/ui/metric-glass";
 import { GlowBadge } from "@/components/ui/glow-badge";
+import { Badge } from "@/components/ui/badge";
 import { MiniSparkline } from "@/components/charts/mini-sparkline";
 import { HeatmapGrid } from "@/components/charts/heatmap-grid";
 import { MarketSummaryCard } from "@/components/ai/market-summary-card";
@@ -116,7 +117,7 @@ export default function DashboardPage() {
           <p className="mt-1 text-xs text-muted sm:text-sm">Market overview and portfolio insights</p>
         </div>
         <div className="flex items-center gap-2">
-          <GlowBadge variant="success" glow>Market Open</GlowBadge>
+          <GlowBadge variant="success">Market Open</GlowBadge>
           <span className="text-xs text-muted">NYSE 9:30 AM ET</span>
         </div>
       </div>
@@ -219,7 +220,7 @@ export default function DashboardPage() {
                   <span className="font-mono text-xs font-bold">{pred.ticker}</span>
                   <GlowBadge
                     variant={pred.direction === "bullish" ? "success" : "danger"}
-                    glow
+                   
                   >
                     {pred.direction}
                   </GlowBadge>

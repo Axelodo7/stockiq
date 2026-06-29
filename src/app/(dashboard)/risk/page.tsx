@@ -12,6 +12,7 @@ import {
 import { GlassCard } from "@/components/ui/glass-card";
 import { MetricGlass } from "@/components/ui/metric-glass";
 import { GlowBadge } from "@/components/ui/glow-badge";
+import { Badge } from "@/components/ui/badge";
 import { MiniSparkline } from "@/components/charts/mini-sparkline";
 import { formatCurrency, formatPercent, cn, seededRandom } from "@/lib/utils";
 
@@ -82,7 +83,7 @@ export default function RiskPage() {
           </h1>
           <p className="mt-1 text-xs text-muted sm:text-sm">Portfolio risk analysis and concentration monitoring</p>
         </div>
-        <GlowBadge variant="warning" glow>Risk Score: 6.4/10</GlowBadge>
+        <GlowBadge variant="warning">Risk Score: 6.4/10</GlowBadge>
       </div>
 
       {/* Risk Metrics */}

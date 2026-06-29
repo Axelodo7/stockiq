@@ -2,148 +2,38 @@
 
 /** Global real-price cache populated by Yahoo Finance fetches.
  *  getStockInfo checks this first so every page shows correct prices. */
+import { seededRandom } from "@/lib/utils";
+
 const realPriceCache = new Map<string, { price: number; name?: string; change?: number; changePercent?: number; volume?: number; high52w?: number; low52w?: number }>();
 
 export function setRealPrice(ticker: string, data: { price: number; name?: string; change?: number; changePercent?: number; volume?: number; high52w?: number; low52w?: number }) {
   realPriceCache.set(ticker.toUpperCase(), data);
 }
 
-export function getRealPrice(ticker: string) {
-  return realPriceCache.get(ticker.toUpperCase()) ?? null;
-}
 
-const ALPACA_KEY = process.env.ALPACA_API_KEY || "";
-const ALPACA_SECRET = process.env.ALPACA_SECRET_KEY || "";
-const ALPACA_DATA_BASE = "https://data.alpaca.markets";
 
-function alpacaHeaders() {
-  return {
-    "APCA-API-KEY-ID": ALPACA_KEY,
-    "APCA-API-SECRET-KEY": ALPACA_SECRET,
-    Accept: "application/json",
-  };
-}
-
-/** Server-side: fetch real price via Alpaca, falling back to Yahoo Finance, then cache it. */
+/** Server-side: fetch real price via Alpaca (or Yahoo fallback), cache it, return price. */
 export async function fetchRealPriceServer(ticker: string): Promise<number | null> {
   const t = ticker.toUpperCase();
   const cached = realPriceCache.get(t);
   if (cached && cached.price > 0) return cached.price;
 
-  // Try Alpaca first
-  if (ALPACA_KEY && ALPACA_SECRET) {
-    try {
-      const url = `${ALPACA_DATA_BASE}/v2/stocks/${encodeURIComponent(t)}/snapshot`;
-      const res = await fetch(url, { headers: alpacaHeaders(), signal: AbortSignal.timeout(8000) });
-      if (res.ok) {
-        const snap = await res.json();
-        if (snap?.trade) {
-          const price = snap.trade.p ?? 0;
-          if (price > 0) {
-            const previousClose = snap.prevDailyBar?.c ?? snap.dailyBar?.c ?? price;
-            setRealPrice(t, {
-              price: Math.round(price * 100) / 100,
-              change: Math.round((price - previousClose) * 100) / 100,
-              changePercent: Math.round(((price - previousClose) / previousClose) * 10000) / 100,
-              volume: snap.dailyBar?.v ?? 0,
-            });
-            return Math.round(price * 100) / 100;
-          }
-        }
-      }
-    } catch { /* fall through to Yahoo */ }
+  const { fetchAlpacaQuote, fetchYahooQuote } = await import("./market-api");
+  const alpaca = await fetchAlpacaQuote(t);
+  if (alpaca) {
+    setRealPrice(t, { price: alpaca.price, change: alpaca.change, changePercent: alpaca.changePercent, volume: alpaca.volume, name: alpaca.name });
+    return alpaca.price;
   }
 
-  // Yahoo Finance fallback
-  try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?interval=1d&range=1d`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
-    if (typeof price === "number" && price > 0) {
-      const previousClose = data?.chart?.result?.[0]?.meta?.chartPreviousClose ?? price;
-      setRealPrice(t, {
-        price: Math.round(price * 100) / 100,
-        change: Math.round((price - previousClose) * 100) / 100,
-        changePercent: Math.round(((price - previousClose) / previousClose) * 10000) / 100,
-        volume: data?.chart?.result?.[0]?.meta?.regularMarketVolume ?? 0,
-        name: data?.chart?.result?.[0]?.meta?.shortName || undefined,
-      });
-      return Math.round(price * 100) / 100;
-    }
-  } catch { /* ignore */ }
+  const yahoo = await fetchYahooQuote(t);
+  if (yahoo) {
+    setRealPrice(t, { price: yahoo.price, change: yahoo.change, changePercent: yahoo.changePercent, volume: yahoo.volume, name: yahoo.name });
+    return yahoo.price;
+  }
 
   return null;
 }
 
-/** Server-side: fetch real prices via Alpaca batch, falling back to Yahoo Finance. Returns price map. */
-export async function fetchRealPricesServer(tickers: string[]): Promise<Record<string, number>> {
-  const results: Record<string, number> = {};
-  const toFetch: string[] = [];
-
-  for (const t of tickers) {
-    const cached = realPriceCache.get(t.toUpperCase());
-    if (cached && cached.price > 0) {
-      results[t.toUpperCase()] = cached.price;
-    } else {
-      toFetch.push(t.toUpperCase());
-    }
-  }
-
-  if (toFetch.length === 0) return results;
-
-  // Try Alpaca batch snapshot
-  if (ALPACA_KEY && ALPACA_SECRET) {
-    try {
-      const symbols = toFetch.join(",");
-      const url = `${ALPACA_DATA_BASE}/v2/stocks/snapshots?symbols=${symbols}`;
-      const res = await fetch(url, { headers: alpacaHeaders(), signal: AbortSignal.timeout(12000) });
-
-      if (res.ok) {
-        const snapshots = await res.json();
-        const stillMissing: string[] = [];
-
-        for (const symbol of toFetch) {
-          const snap = snapshots[symbol];
-          if (!snap?.trade) { stillMissing.push(symbol); continue; }
-          const price = snap.trade.p ?? 0;
-          if (price <= 0) { stillMissing.push(symbol); continue; }
-
-          const previousClose = snap.prevDailyBar?.c ?? snap.dailyBar?.c ?? price;
-          setRealPrice(symbol, {
-            price: Math.round(price * 100) / 100,
-            change: Math.round((price - previousClose) * 100) / 100,
-            changePercent: Math.round(((price - previousClose) / previousClose) * 10000) / 100,
-            volume: snap.dailyBar?.v ?? 0,
-          });
-          results[symbol] = Math.round(price * 100) / 100;
-        }
-
-        // Yahoo fallback for tickers Alpaca didn't return
-        if (stillMissing.length > 0) {
-          await Promise.allSettled(stillMissing.map(async (t) => {
-            const price = await fetchRealPriceServer(t);
-            if (price) results[t] = price;
-          }));
-        }
-
-        return results;
-      }
-    } catch { /* fall through to Yahoo */ }
-  }
-
-  // Yahoo fallback for all missing tickers
-  await Promise.allSettled(toFetch.map(async (t) => {
-    const price = await fetchRealPriceServer(t);
-    if (price) results[t] = price;
-  }));
-
-  return results;
-}
 
 export interface StockInfo {
   name: string;
@@ -624,13 +514,6 @@ export const stockData: Record<string, StockInfo> = {
   },
 };
 
-function seededRandom(seed: number): () => number {
-  let s = seed;
-  return () => {
-    s = (s * 16807 + 0) % 2147483647;
-    return (s - 1) / 2147483646;
-  };
-}
 
 /** Known names for displaying correct company names in search/dropdown. */
 const knownNames: Record<string, { name: string; sector: string }> = {
@@ -790,12 +673,12 @@ export function getStockInfo(ticker: string): StockInfo {
   if (stockData[t]) return stockData[t];
 
   const known = knownNames[t];
-  const safePrice = 0;
+  
 
   return {
     name: known?.name || `${t} Corp.`,
     sector: known?.sector || "Unknown",
-    price: safePrice,
+    price: 0,
     change: 0,
     changePercent: 0,
     marketCap: 0,
@@ -871,38 +754,5 @@ export function generatePriceHistory(
     }
   }
 
-  return data;
-}
-
-/** Simple price history for UI display (close + volume only).
- *  Always ends close to base. Uses seeded PRNG. */
-export function generateSimplePriceHistory(
-  base: number,
-  days = 90
-): { date: string; close: number; volume: number }[] {
-  const data: { date: string; close: number; volume: number }[] = [];
-  let value = base * 0.92;
-  const now = new Date();
-  const rng = seededRandom(Math.round(base * 1000) + days);
-  for (let i = days; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    value += (rng() - 0.45) * (base * 0.012);
-    data.push({
-      date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      close: Math.round(value * 100) / 100,
-      volume: Math.floor(rng() * 60_000_000 + 20_000_000),
-    });
-  }
-  // Scale to end at base
-  if (data.length > 0) {
-    const last = data[data.length - 1].close;
-    if (Math.abs(last - base) > 0.01) {
-      const factor = base / last;
-      for (const pt of data) {
-        pt.close = parseFloat((pt.close * factor).toFixed(2));
-      }
-    }
-  }
   return data;
 }

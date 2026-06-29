@@ -45,7 +45,6 @@ export function MarketSummaryCard({ data, isLoading }: MarketSummaryCardProps) {
         </div>
         <GlowBadge
           variant={data.sentiment === "bullish" ? "success" : data.sentiment === "bearish" ? "danger" : "default"}
-          glow
         >
           {data.sentiment}
         </GlowBadge>

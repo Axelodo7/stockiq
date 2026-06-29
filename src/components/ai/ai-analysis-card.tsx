@@ -51,7 +51,6 @@ export function AIAnalysisCard({ data, isLoading }: AIAnalysisCardProps) {
         </div>
         <GlowBadge
           variant={data.overall_signal === "bullish" ? "success" : data.overall_signal === "bearish" ? "danger" : "default"}
-          glow
         >
           {data.overall_signal} ({data.conviction})
         </GlowBadge>
