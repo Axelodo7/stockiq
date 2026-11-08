@@ -14,6 +14,7 @@ import {
   TrendingDown,
   Star,
   Plus,
+  Newspaper,
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { MetricGlass } from "@/components/ui/metric-glass";
@@ -34,6 +35,7 @@ import { BacktestPanel } from "@/components/predictions/backtest-panel";
 import { LoadingSkeleton } from "@/components/feedback/loading-skeleton";
 import { AIAnalysisCard } from "@/components/ai/ai-analysis-card";
 import { TrendAnalysisCard } from "@/components/ai/trend-analysis-card";
+import { NewsSection } from "@/components/news/news-section";
 import type { FullPrediction, BacktestResult } from "@/types";
 import type { AIAnalysis, TrendAnalysis } from "@/lib/services/python-client";
 import { getStockInfo, generatePriceHistory } from "@/lib/services/market-mock";
@@ -295,6 +297,10 @@ export default function StockDetailPage() {
               <BarChart3 className="h-3.5 w-3.5" />
               Charts
             </TabsTrigger>
+            <TabsTrigger value="news" className="gap-1.5">
+              <Newspaper className="h-3.5 w-3.5" />
+              News
+            </TabsTrigger>
             <TabsTrigger value="predictions" className="gap-1.5">
               <Brain className="h-3.5 w-3.5" />
               Predictions
@@ -349,6 +355,11 @@ export default function StockDetailPage() {
               height={150}
             />
           </GlassCard>
+        </TabsContent>
+
+        {/* News Tab */}
+        <TabsContent value="news" className="space-y-4">
+          <NewsSection ticker={displaySymbol} />
         </TabsContent>
 
         {/* Predictions Tab */}

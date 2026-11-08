@@ -113,6 +113,60 @@ export function BacktestPanel({ result, isLoading, onRunBacktest }: BacktestPane
             />
           </div>
 
+          {/* Cost & data transparency */}
+          {(result.total_fees !== undefined || result.data_source) && (
+            <Card>
+              <CardContent className="p-3">
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[10px] text-muted">
+                  {result.data_source && (
+                    <span>
+                      Data source:{" "}
+                      <span className="font-mono font-semibold uppercase text-foreground">
+                        {result.data_source}
+                      </span>
+                      {result.bars_used !== undefined && (
+                        <span className="ml-1">({result.bars_used} bars)</span>
+                      )}
+                    </span>
+                  )}
+                  {result.total_fees !== undefined && (
+                    <span>
+                      Trading fees:{" "}
+                      <span className="font-mono font-semibold text-foreground">
+                        ${result.total_fees.toFixed(2)}
+                      </span>
+                    </span>
+                  )}
+                  {result.commission_per_share !== undefined && (
+                    <span>
+                      Commission:{" "}
+                      <span className="font-mono font-semibold text-foreground">
+                        ${result.commission_per_share.toFixed(3)}/share
+                      </span>
+                    </span>
+                  )}
+                  {result.slippage_bps !== undefined && (
+                    <span>
+                      Slippage:{" "}
+                      <span className="font-mono font-semibold text-foreground">
+                        {result.slippage_bps} bps/side
+                      </span>
+                    </span>
+                  )}
+                  {result.gross_return !== undefined && (
+                    <span>
+                      Gross (pre-fee):{" "}
+                      <span className="font-mono font-semibold text-foreground">
+                        {result.gross_return > 0 ? "+" : ""}
+                        {result.gross_return.toFixed(2)}%
+                      </span>
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Equity curve */}
           {result.equity_curve.length > 0 && (
             <Card>

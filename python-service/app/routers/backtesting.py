@@ -45,6 +45,8 @@ async def run_backtest(request: BacktestRequest):
         data=[d.model_dump() for d in request.data],
         model=model,
         initial_capital=request.initial_capital,
+        commission=request.commission,
+        slippage_bps=request.slippage_bps,
     )
 
     if "error" in result:
@@ -62,6 +64,12 @@ async def run_backtest(request: BacktestRequest):
         total_trades=result["total_trades"],
         equity_curve=result["equity_curve"],
         trades=result["trades"],
+        initial_capital=result["initial_capital"],
+        final_capital=result["final_capital"],
+        total_fees=result["total_fees"],
+        commission_per_share=result["commission_per_share"],
+        slippage_bps=result["slippage_bps"],
+        gross_return=result["gross_return"],
     )
 
 

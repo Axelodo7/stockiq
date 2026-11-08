@@ -68,5 +68,597 @@
       "max_depth": 12,
       "min_samples_split": 5
     }
+  },
+  {
+    "id": "AAPL_ENSEMBLE_1794177317",
+    "ticker": "AAPL",
+    "model_type": "ENSEMBLE",
+    "status": "completed",
+    "metrics": {
+      "ensemble_accuracy": 1.0,
+      "n_models": 4,
+      "weights": {
+        "XGBOOST": 0.3483,
+        "RANDOM_FOREST": 0.3379,
+        "LSTM": 0.1587,
+        "TRANSFORMER": 0.1551
+      },
+      "base_metrics": {
+        "XGBOOST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.5852,
+          "cv_std": 0.0718,
+          "n_samples": 135,
+          "n_features": 37
+        },
+        "RANDOM_FOREST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.6222,
+          "cv_std": 0.1181,
+          "n_samples": 135,
+          "n_features": 37,
+          "top_features": [
+            {
+              "index": 16,
+              "importance": 0.0725
+            },
+            {
+              "index": 15,
+              "importance": 0.0552
+            },
+            {
+              "index": 10,
+              "importance": 0.0524
+            },
+            {
+              "index": 5,
+              "importance": 0.0397
+            },
+            {
+              "index": 36,
+              "importance": 0.0377
+            }
+          ]
+        },
+        "LSTM": {
+          "train_accuracy": 0.2519,
+          "final_loss": 0.4431,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "hidden_size": 32
+        },
+        "TRANSFORMER": {
+          "train_accuracy": 0.2519,
+          "final_loss": 0.4605,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "d_model": 32,
+          "n_heads": 4
+        }
+      },
+      "n_samples": 135
+    },
+    "duration_ms": 5311,
+    "trained_at": "2026-11-08T17:35:17.080799",
+    "n_samples": 135,
+    "n_features": 37
+  },
+  {
+    "id": "MSFT_ENSEMBLE_1794177322",
+    "ticker": "MSFT",
+    "model_type": "ENSEMBLE",
+    "status": "completed",
+    "metrics": {
+      "ensemble_accuracy": 0.9926,
+      "n_models": 4,
+      "weights": {
+        "XGBOOST": 0.3308,
+        "RANDOM_FOREST": 0.3176,
+        "LSTM": 0.1645,
+        "TRANSFORMER": 0.1871
+      },
+      "base_metrics": {
+        "XGBOOST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.5778,
+          "cv_std": 0.1455,
+          "n_samples": 135,
+          "n_features": 37
+        },
+        "RANDOM_FOREST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.6222,
+          "cv_std": 0.1354,
+          "n_samples": 135,
+          "n_features": 37,
+          "top_features": [
+            {
+              "index": 33,
+              "importance": 0.0603
+            },
+            {
+              "index": 32,
+              "importance": 0.0578
+            },
+            {
+              "index": 6,
+              "importance": 0.0572
+            },
+            {
+              "index": 5,
+              "importance": 0.0506
+            },
+            {
+              "index": 17,
+              "importance": 0.0424
+            }
+          ]
+        },
+        "LSTM": {
+          "train_accuracy": 0.3259,
+          "final_loss": 0.5006,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "hidden_size": 32
+        },
+        "TRANSFORMER": {
+          "train_accuracy": 0.3259,
+          "final_loss": 0.4804,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "d_model": 32,
+          "n_heads": 4
+        }
+      },
+      "n_samples": 135
+    },
+    "duration_ms": 3923,
+    "trained_at": "2026-11-08T17:35:22.267691",
+    "n_samples": 135,
+    "n_features": 37
+  },
+  {
+    "id": "GOOGL_ENSEMBLE_1794177326",
+    "ticker": "GOOGL",
+    "model_type": "ENSEMBLE",
+    "status": "completed",
+    "metrics": {
+      "ensemble_accuracy": 0.9926,
+      "n_models": 4,
+      "weights": {
+        "XGBOOST": 0.3229,
+        "RANDOM_FOREST": 0.315,
+        "LSTM": 0.1411,
+        "TRANSFORMER": 0.221
+      },
+      "base_metrics": {
+        "XGBOOST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.6222,
+          "cv_std": 0.1679,
+          "n_samples": 135,
+          "n_features": 37
+        },
+        "RANDOM_FOREST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.6593,
+          "cv_std": 0.0919,
+          "n_samples": 135,
+          "n_features": 37,
+          "top_features": [
+            {
+              "index": 17,
+              "importance": 0.0826
+            },
+            {
+              "index": 16,
+              "importance": 0.0723
+            },
+            {
+              "index": 15,
+              "importance": 0.0613
+            },
+            {
+              "index": 31,
+              "importance": 0.0502
+            },
+            {
+              "index": 10,
+              "importance": 0.0453
+            }
+          ]
+        },
+        "LSTM": {
+          "train_accuracy": 0.3185,
+          "final_loss": 0.5317,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "hidden_size": 32
+        },
+        "TRANSFORMER": {
+          "train_accuracy": 0.3185,
+          "final_loss": 0.4019,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "d_model": 32,
+          "n_heads": 4
+        }
+      },
+      "n_samples": 135
+    },
+    "duration_ms": 4246,
+    "trained_at": "2026-11-08T17:35:26.790327",
+    "n_samples": 135,
+    "n_features": 37
+  },
+  {
+    "id": "T0_ENSEMBLE_1794177330",
+    "ticker": "T0",
+    "model_type": "ENSEMBLE",
+    "status": "completed",
+    "metrics": {
+      "ensemble_accuracy": 1.0,
+      "n_models": 4,
+      "weights": {
+        "XGBOOST": 0.3368,
+        "RANDOM_FOREST": 0.3281,
+        "LSTM": 0.1371,
+        "TRANSFORMER": 0.198
+      },
+      "base_metrics": {
+        "XGBOOST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.637,
+          "cv_std": 0.0491,
+          "n_samples": 135,
+          "n_features": 37
+        },
+        "RANDOM_FOREST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.5926,
+          "cv_std": 0.0994,
+          "n_samples": 135,
+          "n_features": 37,
+          "top_features": [
+            {
+              "index": 15,
+              "importance": 0.0877
+            },
+            {
+              "index": 16,
+              "importance": 0.0646
+            },
+            {
+              "index": 22,
+              "importance": 0.0638
+            },
+            {
+              "index": 10,
+              "importance": 0.0596
+            },
+            {
+              "index": 4,
+              "importance": 0.0569
+            }
+          ]
+        },
+        "LSTM": {
+          "train_accuracy": 0.2963,
+          "final_loss": 0.5271,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "hidden_size": 32
+        },
+        "TRANSFORMER": {
+          "train_accuracy": 0.2963,
+          "final_loss": 0.4277,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "d_model": 32,
+          "n_heads": 4
+        }
+      },
+      "n_samples": 135
+    },
+    "duration_ms": 3912,
+    "trained_at": "2026-11-08T17:35:30.967032",
+    "n_samples": 135,
+    "n_features": 37
+  },
+  {
+    "id": "T1_ENSEMBLE_1794177335",
+    "ticker": "T1",
+    "model_type": "ENSEMBLE",
+    "status": "completed",
+    "metrics": {
+      "ensemble_accuracy": 1.0,
+      "n_models": 4,
+      "weights": {
+        "XGBOOST": 0.327,
+        "RANDOM_FOREST": 0.3194,
+        "LSTM": 0.1722,
+        "TRANSFORMER": 0.1814
+      },
+      "base_metrics": {
+        "XGBOOST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.6593,
+          "cv_std": 0.0857,
+          "n_samples": 135,
+          "n_features": 37
+        },
+        "RANDOM_FOREST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.6074,
+          "cv_std": 0.1114,
+          "n_samples": 135,
+          "n_features": 37,
+          "top_features": [
+            {
+              "index": 16,
+              "importance": 0.1027
+            },
+            {
+              "index": 22,
+              "importance": 0.1006
+            },
+            {
+              "index": 10,
+              "importance": 0.0595
+            },
+            {
+              "index": 6,
+              "importance": 0.0548
+            },
+            {
+              "index": 15,
+              "importance": 0.0496
+            }
+          ]
+        },
+        "LSTM": {
+          "train_accuracy": 0.4222,
+          "final_loss": 0.5393,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "hidden_size": 32
+        },
+        "TRANSFORMER": {
+          "train_accuracy": 0.4222,
+          "final_loss": 0.5266,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "d_model": 32,
+          "n_heads": 4
+        }
+      },
+      "n_samples": 135
+    },
+    "duration_ms": 4033,
+    "trained_at": "2026-11-08T17:35:35.250705",
+    "n_samples": 135,
+    "n_features": 37
+  },
+  {
+    "id": "T2_ENSEMBLE_1794177339",
+    "ticker": "T2",
+    "model_type": "ENSEMBLE",
+    "status": "completed",
+    "metrics": {
+      "ensemble_accuracy": 0.9926,
+      "n_models": 4,
+      "weights": {
+        "XGBOOST": 0.3224,
+        "RANDOM_FOREST": 0.3095,
+        "LSTM": 0.1631,
+        "TRANSFORMER": 0.2049
+      },
+      "base_metrics": {
+        "XGBOOST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.5778,
+          "cv_std": 0.1455,
+          "n_samples": 135,
+          "n_features": 37
+        },
+        "RANDOM_FOREST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.6222,
+          "cv_std": 0.1354,
+          "n_samples": 135,
+          "n_features": 37,
+          "top_features": [
+            {
+              "index": 33,
+              "importance": 0.0603
+            },
+            {
+              "index": 32,
+              "importance": 0.0578
+            },
+            {
+              "index": 6,
+              "importance": 0.0572
+            },
+            {
+              "index": 5,
+              "importance": 0.0506
+            },
+            {
+              "index": 17,
+              "importance": 0.0424
+            }
+          ]
+        },
+        "LSTM": {
+          "train_accuracy": 0.3259,
+          "final_loss": 0.4964,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "hidden_size": 32
+        },
+        "TRANSFORMER": {
+          "train_accuracy": 0.3259,
+          "final_loss": 0.4397,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "d_model": 32,
+          "n_heads": 4
+        }
+      },
+      "n_samples": 135
+    },
+    "duration_ms": 4232,
+    "trained_at": "2026-11-08T17:35:39.746587",
+    "n_samples": 135,
+    "n_features": 37
+  },
+  {
+    "id": "T3_ENSEMBLE_1794177344",
+    "ticker": "T3",
+    "model_type": "ENSEMBLE",
+    "status": "completed",
+    "metrics": {
+      "ensemble_accuracy": 0.9852,
+      "n_models": 4,
+      "weights": {
+        "XGBOOST": 0.3354,
+        "RANDOM_FOREST": 0.3236,
+        "LSTM": 0.13,
+        "TRANSFORMER": 0.2109
+      },
+      "base_metrics": {
+        "XGBOOST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.6222,
+          "cv_std": 0.1333,
+          "n_samples": 135,
+          "n_features": 37
+        },
+        "RANDOM_FOREST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.6222,
+          "cv_std": 0.1613,
+          "n_samples": 135,
+          "n_features": 37,
+          "top_features": [
+            {
+              "index": 17,
+              "importance": 0.0915
+            },
+            {
+              "index": 16,
+              "importance": 0.0604
+            },
+            {
+              "index": 15,
+              "importance": 0.0466
+            },
+            {
+              "index": 2,
+              "importance": 0.0463
+            },
+            {
+              "index": 10,
+              "importance": 0.0449
+            }
+          ]
+        },
+        "LSTM": {
+          "train_accuracy": 0.2444,
+          "final_loss": 0.4882,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "hidden_size": 32
+        },
+        "TRANSFORMER": {
+          "train_accuracy": 0.2444,
+          "final_loss": 0.3921,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "d_model": 32,
+          "n_heads": 4
+        }
+      },
+      "n_samples": 135
+    },
+    "duration_ms": 4029,
+    "trained_at": "2026-11-08T17:35:44.054563",
+    "n_samples": 135,
+    "n_features": 37
+  },
+  {
+    "id": "T4_ENSEMBLE_1794177348",
+    "ticker": "T4",
+    "model_type": "ENSEMBLE",
+    "status": "completed",
+    "metrics": {
+      "ensemble_accuracy": 0.9778,
+      "n_models": 4,
+      "weights": {
+        "XGBOOST": 0.3936,
+        "RANDOM_FOREST": 0.3764,
+        "LSTM": 0.027,
+        "TRANSFORMER": 0.203
+      },
+      "base_metrics": {
+        "XGBOOST": {
+          "train_accuracy": 1.0,
+          "cv_accuracy": 0.8296,
+          "cv_std": 0.0554,
+          "n_samples": 135,
+          "n_features": 37
+        },
+        "RANDOM_FOREST": {
+          "train_accuracy": 0.9926,
+          "cv_accuracy": 0.8519,
+          "cv_std": 0.0777,
+          "n_samples": 135,
+          "n_features": 37,
+          "top_features": [
+            {
+              "index": 17,
+              "importance": 0.094
+            },
+            {
+              "index": 25,
+              "importance": 0.076
+            },
+            {
+              "index": 8,
+              "importance": 0.0533
+            },
+            {
+              "index": 14,
+              "importance": 0.0463
+            },
+            {
+              "index": 19,
+              "importance": 0.0454
+            }
+          ]
+        },
+        "LSTM": {
+          "train_accuracy": 0.1111,
+          "final_loss": 0.3485,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "hidden_size": 32
+        },
+        "TRANSFORMER": {
+          "train_accuracy": 0.1111,
+          "final_loss": 0.2742,
+          "epochs_trained": 50,
+          "n_samples": 135,
+          "d_model": 32,
+          "n_heads": 4
+        }
+      },
+      "n_samples": 135
+    },
+    "duration_ms": 3900,
+    "trained_at": "2026-11-08T17:35:48.212250",
+    "n_samples": 135,
+    "n_features": 37
   }
 ]

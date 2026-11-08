@@ -13,6 +13,7 @@ import {
   BarChart3,
   Zap,
   Globe,
+  Newspaper,
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { MetricGlass } from "@/components/ui/metric-glass";
@@ -21,16 +22,18 @@ import { Badge } from "@/components/ui/badge";
 import { MiniSparkline } from "@/components/charts/mini-sparkline";
 import { HeatmapGrid } from "@/components/charts/heatmap-grid";
 import { MarketSummaryCard } from "@/components/ai/market-summary-card";
+import { NewsCompactList } from "@/components/news/news-section";
+import { LiveIndicator } from "@/components/feedback/live-indicator";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 import { cn, seededRandom } from "@/lib/utils";
 import { useStockPrices } from "@/hooks/use-stock-prices";
 import type { MarketSummary } from "@/lib/services/python-client";
 
-const indices = [
-  { ticker: "SPX", name: "S&P 500", value: 5842.31, change: 0.67 },
-  { ticker: "IXIC", name: "NASDAQ", value: 18439.17, change: 1.12 },
-  { ticker: "DJI", name: "Dow Jones", value: 43127.58, change: 0.34 },
-  { ticker: "VIX", name: "VIX", value: 14.23, change: -5.21 },
+const indicesFallback = [
+  { ticker: "SPX", name: "S&P 500", value: 5842.31, changePercent: 0.67 },
+  { ticker: "IXIC", name: "NASDAQ", value: 18439.17, changePercent: 1.12 },
+  { ticker: "DJI", name: "Dow Jones", value: 43127.58, changePercent: 0.34 },
+  { ticker: "VIX", name: "VIX", value: 14.23, changePercent: -5.21 },
 ];
 
 const DEFAULT_WATCHLIST_TICKERS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"];
@@ -78,7 +81,10 @@ function generateSparkData(base: number, positive: boolean): number[] {
 export default function DashboardPage() {
   const [marketSummary, setMarketSummary] = useState<MarketSummary | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(true);
-  const { prices, loading: pricesLoading } = useStockPrices({ tickers: DEFAULT_WATCHLIST_TICKERS });
+  const [indices, setIndices] = useState(indicesFallback);
+  const { prices, loading: pricesLoading, realtimeConnected, lastUpdated } = useStockPrices({
+    tickers: DEFAULT_WATCHLIST_TICKERS,
+  });
 
   useEffect(() => {
     fetch("/api/ai/market-summary")
@@ -86,6 +92,11 @@ export default function DashboardPage() {
       .then((json) => { if (json.success && json.data) setMarketSummary(json.data); })
       .catch(() => {})
       .finally(() => setLoadingSummary(false));
+
+    fetch("/api/market-indices")
+      .then((r) => r.json())
+      .then((json) => { if (json.success && json.data?.length > 0) setIndices(json.data); })
+      .catch(() => {});
   }, []);
 
   const stocks = DEFAULT_WATCHLIST_TICKERS.map((ticker) => {
@@ -118,7 +129,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-2">
           <GlowBadge variant="success">Market Open</GlowBadge>
-          <span className="text-xs text-muted">NYSE 9:30 AM ET</span>
+          <LiveIndicator connected={realtimeConnected} lastUpdate={lastUpdated} />
         </div>
       </div>
 
@@ -129,16 +140,16 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium uppercase text-muted">{idx.ticker}</p>
-                <p className="font-mono text-base font-bold sm:text-lg">{idx.value.toLocaleString()}</p>
+                <p className="font-mono text-base font-bold sm:text-lg">{idx.value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
               </div>
               <span
                 className={cn(
                   "font-mono text-xs font-bold",
-                  idx.change >= 0 ? "text-positive" : "text-negative"
+                  idx.changePercent >= 0 ? "text-positive" : "text-negative"
                 )}
               >
-                {idx.change >= 0 ? "+" : ""}
-                {idx.change.toFixed(2)}%
+                {idx.changePercent >= 0 ? "+" : ""}
+                {idx.changePercent.toFixed(2)}%
               </span>
             </div>
           </GlassCard>
@@ -263,6 +274,39 @@ export default function DashboardPage() {
         {/* Market Summary */}
         <MarketSummaryCard data={marketSummary} isLoading={loadingSummary} />
       </div>
+
+      {/* Top News */}
+      <GlassCard padding="none">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Newspaper className="h-4 w-4 text-accent" />
+            <h2 className="font-display text-sm font-semibold">Top News</h2>
+          </div>
+          <Link href="/market" className="flex items-center gap-1 text-[10px] text-muted hover:text-foreground">
+            View all <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border">
+          <div>
+            <div className="px-4 py-2 border-b border-border">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">AAPL News</p>
+            </div>
+            <NewsCompactList ticker="AAPL" limit={3} />
+          </div>
+          <div>
+            <div className="px-4 py-2 border-b border-border sm:border-t-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">NVDA News</p>
+            </div>
+            <NewsCompactList ticker="NVDA" limit={3} />
+          </div>
+          <div>
+            <div className="px-4 py-2 border-b border-border sm:border-t-0 lg:border-t-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">TSLA News</p>
+            </div>
+            <NewsCompactList ticker="TSLA" limit={3} />
+          </div>
+        </div>
+      </GlassCard>
 
       {/* Recent Activity */}
       <GlassCard padding="none">

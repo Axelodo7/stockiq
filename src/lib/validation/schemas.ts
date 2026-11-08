@@ -4,7 +4,9 @@ export const tickerSchema = z
   .string()
   .min(1)
   .max(10)
-  .regex(/^[A-Z]+$/, "Ticker must be uppercase letters only");
+  // Plain tickers (AAPL), class shares (BRK.B, RDS-A), and numbered series
+  // where digits only appear in a suffix after a separator (RDS.A, BF-B)
+  .regex(/^[A-Z][A-Z]*([.-][A-Z0-9]+)*$/, "Ticker must be uppercase letters, digits, dots, or hyphens");
 
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

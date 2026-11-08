@@ -3,7 +3,7 @@ import type { FullPrediction, OHLCV } from "@/types";
 const PYTHON_URL = process.env.PYTHON_SERVICE_URL || "http://localhost:8000";
 const TIMEOUT_MS = 5000;
 
-async function fetchPython<T>(
+export async function fetchPython<T>(
   path: string,
   body?: unknown,
   timeout = TIMEOUT_MS
@@ -218,13 +218,17 @@ export async function runBacktest(
   ticker: string,
   modelType: string,
   data: OHLCV[],
-  initialCapital = 10000
+  initialCapital = 10000,
+  commission = 0.005,
+  slippageBps = 5
 ): Promise<BacktestResult | null> {
   return fetchPython<BacktestResult>("/ml/backtest", {
     ticker,
     model_type: modelType,
     data,
     initial_capital: initialCapital,
+    commission,
+    slippage_bps: slippageBps,
   }, 30000);
 }
 

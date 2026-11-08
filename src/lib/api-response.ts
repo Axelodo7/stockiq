@@ -53,6 +53,18 @@ export function validationError(message: string, details?: unknown) {
 
 export function handleApiError(error: unknown) {
   console.error("API Error:", error);
+
+  // Clerk auth failures should surface as 401, not 500.
+  const message = error instanceof Error ? error.message : "";
+  if (
+    message.includes("auth() was called") ||
+    message.includes("clerkMiddleware") ||
+    message.includes("Unauthenticated") ||
+    message.includes("not authenticated")
+  ) {
+    return unauthorized("Authentication required");
+  }
+
   if (error instanceof Error) {
     return errorResponse(error.message, 500, "INTERNAL_ERROR");
   }

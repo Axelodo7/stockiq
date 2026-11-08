@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTrendAnalysis, type TrendAnalysis } from "@/lib/services/python-client";
 import { generatePriceHistory, getStockInfo, fetchRealPriceServer } from "@/lib/services/market-mock";
+import { checkAIRateLimit } from "@/lib/security/ai-rate-limit";
 
 function generateMockTrends(ticker: string, realPrice?: number): TrendAnalysis {
   const stock = getStockInfo(ticker);
@@ -34,6 +35,9 @@ function generateMockTrends(ticker: string, realPrice?: number): TrendAnalysis {
 }
 
 export async function POST(request: NextRequest) {
+  const limit = await checkAIRateLimit(request);
+  if (limit.blocked) return limit.response!;
+
   try {
     const body = await request.json();
     const { ticker, data } = body;

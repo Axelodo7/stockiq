@@ -52,3 +52,12 @@ export function perIPLimit(
 ) {
   return checkRateLimit(`ip:${ip}`, maxRequests, windowMs);
 }
+
+/** Stricter limits for expensive AI routes — 10 requests/min per user, 5/min per IP. */
+export function aiUserLimit(userId: string) {
+  return checkRateLimit(`ai:user:${userId}`, 10, 60_000);
+}
+
+export function aiIPLimit(ip: string) {
+  return checkRateLimit(`ai:ip:${ip}`, 5, 60_000);
+}

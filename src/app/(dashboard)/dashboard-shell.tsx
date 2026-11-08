@@ -19,7 +19,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           sidebarOpen ? "lg:ml-64" : "lg:ml-[72px]"
         )}
       >
-        <div className="p-4 sm:p-6">{children}</div>
+        <div className="p-3 sm:p-6">{children}</div>
       </main>
       <ChatBot />
     </div>

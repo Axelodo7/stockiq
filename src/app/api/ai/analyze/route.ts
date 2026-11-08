@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAIAnalysis, type AIAnalysis } from "@/lib/services/python-client";
 import { generatePriceHistory, getStockInfo, fetchRealPriceServer } from "@/lib/services/market-mock";
 import { cached, TTL } from "@/lib/server-cache";
+import { checkAIRateLimit } from "@/lib/security/ai-rate-limit";
 
 function generateMockAnalysis(ticker: string, realPrice?: number): AIAnalysis {
   const stock = getStockInfo(ticker);
@@ -44,6 +45,9 @@ function generateMockAnalysis(ticker: string, realPrice?: number): AIAnalysis {
 }
 
 export async function POST(request: NextRequest) {
+  const limit = await checkAIRateLimit(request);
+  if (limit.blocked) return limit.response!;
+
   try {
     const body = await request.json();
     const { ticker, data } = body;

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import predictions, indicators, training, backtesting, ai_router
+from app.routers import predictions, indicators, training, backtesting, ai_router, ranking
 from app.config import settings
 
 app = FastAPI(
@@ -21,6 +21,7 @@ app.include_router(predictions.router, prefix="/predict", tags=["predictions"])
 app.include_router(indicators.router, prefix="/indicators", tags=["indicators"])
 app.include_router(training.router, prefix="/ml", tags=["training"])
 app.include_router(backtesting.router, prefix="/ml", tags=["backtesting"])
+app.include_router(ranking.router, prefix="/ml", tags=["ranking"])
 app.include_router(ai_router.router, prefix="/ai", tags=["ai-analysis"])
 
 

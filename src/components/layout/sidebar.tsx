@@ -19,6 +19,9 @@ import {
   Shield,
   Calendar,
   X,
+  Sparkles,
+  ScanLine,
+  Trophy,
 } from "lucide-react";
 import { useAppStore } from "@/store/app-store";
 
@@ -33,6 +36,9 @@ const navSections = [
   {
     label: "Analysis",
     items: [
+      { href: "/ai-advisor", label: "AI Advisor", icon: Sparkles },
+      { href: "/rankings", label: "Rankings", icon: Trophy },
+      { href: "/chart-analyzer", label: "Chart Analyzer", icon: ScanLine },
       { href: "/stock/AAPL", label: "Stocks", icon: Search },
       { href: "/predictions", label: "Predictions", icon: Brain },
       { href: "/models", label: "Models", icon: Cpu },
@@ -126,7 +132,7 @@ export function Sidebar() {
                       }
                     }}
                     className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150",
+                      "group flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 lg:min-h-0 lg:py-2",
                       isActive
                         ? "bg-accent/10 text-accent"
                         : "text-muted hover:bg-panel-elevated hover:text-foreground"

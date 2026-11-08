@@ -260,6 +260,12 @@ export interface BacktestResult {
   trades: BacktestTrade[];
   initial_capital: number;
   final_capital: number;
+  total_fees?: number;
+  commission_per_share?: number;
+  slippage_bps?: number;
+  gross_return?: number;
+  data_source?: string;
+  bars_used?: number;
 }
 
 export interface ModelRunData {

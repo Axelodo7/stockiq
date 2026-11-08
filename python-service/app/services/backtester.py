@@ -16,20 +16,32 @@ class BacktestEngine:
         stop_loss: float = 0.05,
         take_profit: float = 0.10,
         min_confidence: float = 0.55,
+        commission: float = 0.005,
+        slippage_bps: float = 5.0,
     ) -> dict:
-        """Run backtest on historical data using a trained model."""
+        """Run backtest on historical data using a trained model.
+
+        Args:
+            commission: Per-share commission in dollars (e.g. 0.005 = $0.005/share).
+            slippage_bps: Slippage in basis points applied per side (5 bps = 0.05%).
+        """
         if len(data) < 70:
             return {"error": "Need at least 70 data points for backtesting"}
 
         closes = np.array([d["close"] for d in data], dtype=np.float64)
         dates = [d["date"] for d in data]
 
+        # Slippage factor: fills are worse than the observed close by this ratio.
+        slippage = slippage_bps / 10_000.0
+
         # Walk-forward: train on first 60 points, predict from 61 onwards
         capital = initial_capital
         position = 0.0  # shares held
         entry_price = 0.0
+        entry_fee = 0.0  # commission paid on the opening fill
         equity_curve = []
         trades = []
+        total_fees = 0.0
 
         for i in range(60, len(data)):
             window = data[i - 59 : i + 1]
@@ -55,26 +67,34 @@ class BacktestEngine:
                 # Check stop loss / take profit
                 pnl_pct = (current_price - entry_price) / entry_price
                 if pnl_pct <= -stop_loss or pnl_pct >= take_profit:
-                    # Close position
-                    sell_price = current_price
-                    capital += position * sell_price
+                    # Close position — apply slippage + commission on the exit
+                    sell_price = current_price * (1 - slippage)
+                    exit_fee = position * commission
+                    proceeds = position * sell_price - exit_fee
+                    capital += proceeds
+                    total_fees += exit_fee
                     trades.append({
                         "entry_date": trades[-1]["exit_date"] if trades and "exit_date" in trades[-1] else dates[max(0, i - 5)],
                         "exit_date": dates[i],
                         "entry_price": round(entry_price, 2),
                         "exit_price": round(sell_price, 2),
                         "shares": round(position, 4),
-                        "pnl": round((sell_price - entry_price) * position, 2),
+                        "pnl": round((sell_price - entry_price) * position - exit_fee - entry_fee, 2),
                         "pnl_pct": round(pnl_pct * 100, 2),
+                        "fees": round(exit_fee + entry_fee, 4),
                         "reason": "stop_loss" if pnl_pct <= -stop_loss else "take_profit",
                     })
                     position = 0.0
                     entry_price = 0.0
+                    entry_fee = 0.0
 
                 # Sell signal
                 elif prob < (1 - min_confidence):
-                    sell_price = current_price
-                    capital += position * sell_price
+                    sell_price = current_price * (1 - slippage)
+                    exit_fee = position * commission
+                    proceeds = position * sell_price - exit_fee
+                    capital += proceeds
+                    total_fees += exit_fee
                     pnl_pct = (sell_price - entry_price) / entry_price
                     trades.append({
                         "entry_date": dates[max(0, i - 5)],
@@ -82,22 +102,30 @@ class BacktestEngine:
                         "entry_price": round(entry_price, 2),
                         "exit_price": round(sell_price, 2),
                         "shares": round(position, 4),
-                        "pnl": round((sell_price - entry_price) * position, 2),
+                        "pnl": round((sell_price - entry_price) * position - exit_fee - entry_fee, 2),
                         "pnl_pct": round(pnl_pct * 100, 2),
+                        "fees": round(exit_fee + entry_fee, 4),
                         "reason": "sell_signal",
                     })
                     position = 0.0
                     entry_price = 0.0
+                    entry_fee = 0.0
 
             else:
                 # Buy signal
                 if prob > min_confidence and confidence > 0.15:
                     invest_amount = capital * position_size
-                    if invest_amount > current_price:
-                        shares = invest_amount / current_price
-                        capital -= shares * current_price
-                        position = shares
-                        entry_price = current_price
+                    # Fill worse than observed close due to slippage
+                    fill_price = current_price * (1 + slippage)
+                    if invest_amount > fill_price:
+                        shares = invest_amount / fill_price
+                        buy_fee = shares * commission
+                        if buy_fee < invest_amount:
+                            capital -= shares * fill_price + buy_fee
+                            total_fees += buy_fee
+                            position = shares
+                            entry_price = fill_price
+                            entry_fee = buy_fee
 
             equity_curve.append({
                 "date": dates[i],
@@ -107,8 +135,10 @@ class BacktestEngine:
 
         # Close any remaining position
         if position > 0:
-            final_price = closes[-1]
-            capital += position * final_price
+            final_price = closes[-1] * (1 - slippage)
+            exit_fee = position * commission
+            capital += position * final_price - exit_fee
+            total_fees += exit_fee
             pnl_pct = (final_price - entry_price) / entry_price
             trades.append({
                 "entry_date": dates[max(0, len(data) - 5)],
@@ -116,8 +146,9 @@ class BacktestEngine:
                 "entry_price": round(entry_price, 2),
                 "exit_price": round(final_price, 2),
                 "shares": round(position, 4),
-                "pnl": round((final_price - entry_price) * position, 2),
+                "pnl": round((final_price - entry_price) * position - exit_fee - entry_fee, 2),
                 "pnl_pct": round(pnl_pct * 100, 2),
+                "fees": round(exit_fee + entry_fee, 4),
                 "reason": "end_of_data",
             })
             position = 0.0
@@ -177,6 +208,12 @@ class BacktestEngine:
             "trades": trades,
             "initial_capital": initial_capital,
             "final_capital": round(final_equity, 2),
+            "total_fees": round(total_fees, 2),
+            "commission_per_share": commission,
+            "slippage_bps": slippage_bps,
+            "gross_return": round(
+                ((final_equity + total_fees) - initial_capital) / initial_capital * 100, 2
+            ),
         }
 
 

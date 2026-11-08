@@ -76,6 +76,8 @@ class BacktestRequest(BaseModel):
     data: list[OHLCV]
     model_type: str = "ENSEMBLE"
     initial_capital: float = 10000.0
+    commission: float = 0.005
+    slippage_bps: float = 5.0
 
 
 class BacktestResponse(BaseModel):
@@ -90,6 +92,12 @@ class BacktestResponse(BaseModel):
     total_trades: int
     equity_curve: list[dict]
     trades: list[dict]
+    initial_capital: float = 10000.0
+    final_capital: float = 10000.0
+    total_fees: float = 0.0
+    commission_per_share: float = 0.005
+    slippage_bps: float = 5.0
+    gross_return: float = 0.0
 
 
 class IndicatorRequest(BaseModel):

@@ -1,19 +1,29 @@
 /** Shared Alpaca Data API configuration and helpers. */
 
-export const ALPACA_KEY = process.env.ALPACA_API_KEY || "";
-export const ALPACA_SECRET = process.env.ALPACA_SECRET_KEY || "";
+/**
+ * Read lazily so env changes (tests, runtime config) are picked up.
+ * Module-level consts would freeze the value at import time.
+ */
+function alpacaKey(): string {
+  return process.env.ALPACA_API_KEY || "";
+}
+
+function alpacaSecret(): string {
+  return process.env.ALPACA_SECRET_KEY || "";
+}
+
 export const ALPACA_BASE = "https://data.alpaca.markets";
 
 export function alpacaHeaders(): Record<string, string> {
   return {
-    "APCA-API-KEY-ID": ALPACA_KEY,
-    "APCA-API-SECRET-KEY": ALPACA_SECRET,
+    "APCA-API-KEY-ID": alpacaKey(),
+    "APCA-API-SECRET-KEY": alpacaSecret(),
     Accept: "application/json",
   };
 }
 
 export function hasAlpacaCredentials(): boolean {
-  return Boolean(ALPACA_KEY && ALPACA_SECRET);
+  return Boolean(alpacaKey() && alpacaSecret());
 }
 
 /** Normalized stock quote returned by both Alpaca and Yahoo. */
@@ -35,7 +45,9 @@ export function parseAlpacaSnapshot(
   ticker: string,
   snap: { trade?: { p: number }; dailyBar?: { o: number; h: number; l: number; c: number; v: number }; prevDailyBar?: { c: number } }
 ): NormalizedQuote | null {
-  const price = snap.trade?.p ?? 0;
+  // Prefer the live trade price; fall back to the daily bar close for symbols
+  // that have not traded yet (pre-market, illiquid, halted).
+  const price = snap.trade?.p ?? snap.dailyBar?.c ?? 0;
   if (price <= 0) return null;
 
   const dailyBar = snap.dailyBar;

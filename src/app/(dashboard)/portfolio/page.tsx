@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import {
   TrendingUp,
@@ -11,6 +11,8 @@ import {
   Search,
   X,
   RefreshCw,
+  LogIn,
+  Loader2,
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { MetricGlass } from "@/components/ui/metric-glass";
@@ -20,34 +22,12 @@ import { EquityCurveChart } from "@/components/charts/equity-curve";
 import { PortfolioAllocation } from "@/components/charts/portfolio-allocation";
 import { MiniSparkline } from "@/components/charts/mini-sparkline";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { formatCurrency, formatPercent, formatCompact, cn, seededRandom } from "@/lib/utils";
+import { formatCurrency, formatPercent, cn, seededRandom } from "@/lib/utils";
 import { getStockInfo, stockData } from "@/lib/services/market-mock";
 import { fetchStockQuotes, type RealStockQuote } from "@/lib/services/stock-api";
+import { usePortfolio } from "@/hooks/use-portfolio";
 
-interface Position {
-  id: string;
-  ticker: string;
-  name: string;
-  shares: number;
-  avgCost: number;
-}
-
-const STORAGE_KEY = "stockiq_portfolio_positions";
 const COLORS = ["#00d4ff", "#00e676", "#ffab00", "#ff1744", "#7c4dff", "#00bfa5", "#ff9100", "#d500f9"];
-
-function loadPositions(): Position[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function savePositions(positions: Position[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(positions));
-}
 
 function generateSparkData(base: number, positive: boolean): number[] {
   const rng = seededRandom(Math.round(base * 100));
@@ -63,13 +43,23 @@ function generateSparkData(base: number, positive: boolean): number[] {
 const allTickers = Object.keys(stockData);
 
 export default function PortfolioPage() {
-  const [positions, setPositions] = useState<Position[]>([]);
+  const {
+    positions,
+    loading,
+    error,
+    isSignedIn,
+    addPosition,
+    removePosition,
+  } = usePortfolio();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const [shares, setShares] = useState("");
   const [avgCost, setAvgCost] = useState("");
-  const [mounted, setMounted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const [realPrices, setRealPrices] = useState<Record<string, RealStockQuote>>({});
   const [previewQuote, setPreviewQuote] = useState<RealStockQuote | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -78,7 +68,7 @@ export default function PortfolioPage() {
   const refreshPrices = useCallback(async (force = true) => {
     if (positions.length === 0) return;
     setRefreshing(true);
-    const tickers = positions.map((p) => p.ticker);
+    const tickers = positions.map((p) => p.stock.ticker);
     const quotes = await fetchStockQuotes(tickers, force);
     setRealPrices(quotes);
     setLastUpdated(new Date());
@@ -86,17 +76,15 @@ export default function PortfolioPage() {
   }, [positions]);
 
   useEffect(() => {
-    setPositions(loadPositions());
-    setMounted(true);
-  }, []);
+    if (positions.length > 0) refreshPrices(true);
+  }, [positions.length, refreshPrices]);
 
-  // Initial fetch + auto-refresh every 30 seconds
+  // Auto-refresh every 30s
   useEffect(() => {
-    if (!mounted || positions.length === 0) return;
-    refreshPrices(true);
+    if (positions.length === 0) return;
     const interval = setInterval(() => refreshPrices(true), 30_000);
     return () => clearInterval(interval);
-  }, [mounted, positions, refreshPrices]);
+  }, [positions.length, refreshPrices]);
 
   // Fetch real price for selected ticker in dialog
   useEffect(() => {
@@ -110,7 +98,7 @@ export default function PortfolioPage() {
   }, [selectedTicker]);
 
   const searchUpper = search.toUpperCase().trim();
-  const isValidTicker = /^[A-Z]{1,6}$/.test(searchUpper);
+  const isValidTicker = /^[A-Z]{1,10}$/.test(searchUpper);
   const isKnownTicker = allTickers.includes(searchUpper);
 
   const filteredTickers = allTickers.filter(
@@ -121,100 +109,147 @@ export default function PortfolioPage() {
 
   const showCustomOption = isValidTicker && !isKnownTicker && !selectedTicker && search.length > 0;
 
-  const addPosition = useCallback(async () => {
+  const handleAddPosition = useCallback(async () => {
     if (!selectedTicker || !shares || !avgCost) return;
     const numShares = parseFloat(shares);
     const numCost = parseFloat(avgCost);
     if (isNaN(numShares) || numShares <= 0 || isNaN(numCost) || numCost <= 0) return;
 
-    const info = getStockInfo(selectedTicker);
-    const newPos: Position = {
-      id: Date.now().toString(),
-      ticker: selectedTicker.toUpperCase(),
-      name: info.name,
-      shares: numShares,
-      avgCost: numCost,
-    };
-
-    const updated = [...positions, newPos];
-    setPositions(updated);
-    savePositions(updated);
-
-    // Fetch real price for the new ticker
-    const quote = await fetchStockQuotes([selectedTicker]);
-    if (quote[selectedTicker.toUpperCase()]) {
-      setRealPrices((prev) => ({
-        ...prev,
-        [selectedTicker.toUpperCase()]: quote[selectedTicker.toUpperCase()],
-      }));
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await addPosition({
+        stockTicker: selectedTicker.toUpperCase(),
+        shares: numShares,
+        avgCost: numCost,
+      });
+      setDialogOpen(false);
+      setSearch("");
+      setSelectedTicker(null);
+      setShares("");
+      setAvgCost("");
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to add position");
+    } finally {
+      setSubmitting(false);
     }
+  }, [selectedTicker, shares, avgCost, addPosition]);
 
-    setDialogOpen(false);
-    setSearch("");
-    setSelectedTicker(null);
-    setShares("");
-    setAvgCost("");
-  }, [positions, selectedTicker, shares, avgCost]);
-
-  const removePosition = useCallback(
-    (id: string) => {
-      const updated = positions.filter((p) => p.id !== id);
-      setPositions(updated);
-      savePositions(updated);
+  const handleRemovePosition = useCallback(
+    async (id: string) => {
+      try {
+        await removePosition(id);
+      } catch (err) {
+        console.error("Failed to remove position:", err);
+      }
     },
-    [positions]
+    [removePosition]
   );
 
-  const hasRealPrices = positions.length > 0 && positions.every((p) => realPrices[p.ticker]);
+  const hasRealPrices = positions.length > 0 && positions.every((p) => realPrices[p.stock.ticker]);
 
-  const enriched = positions.map((p) => {
-    const realQuote = realPrices[p.ticker];
-    const mockInfo = getStockInfo(p.ticker);
-    const currentPrice = realQuote?.price || mockInfo.price;
-    const stockName = realQuote?.name || mockInfo.name;
-    return {
-      ...p,
-      name: stockName,
-      currentPrice,
-      totalCost: p.shares * p.avgCost,
-      currentValue: p.shares * currentPrice,
-      gainLoss: (currentPrice - p.avgCost) * p.shares,
-      gainLossPercent: ((currentPrice - p.avgCost) / p.avgCost) * 100,
-    };
-  });
+  const enriched = useMemo(() => {
+    return positions.map((p) => {
+      const realQuote = realPrices[p.stock.ticker];
+      const mockInfo = getStockInfo(p.stock.ticker);
+      const currentPrice = realQuote?.price || mockInfo.price || p.avgCost;
+      const stockName = realQuote?.name || p.stock.companyName || mockInfo.name || p.stock.ticker;
+      return {
+        ...p,
+        name: stockName,
+        currentPrice,
+        totalCost: p.shares * p.avgCost,
+        currentValue: p.shares * currentPrice,
+        gainLoss: (currentPrice - p.avgCost) * p.shares,
+        gainLossPercent: ((currentPrice - p.avgCost) / p.avgCost) * 100,
+      };
+    });
+  }, [positions, realPrices]);
 
   const totalValue = enriched.reduce((sum, p) => sum + p.currentValue, 0);
   const totalCost = enriched.reduce((sum, p) => sum + p.totalCost, 0);
   const totalGainLoss = totalValue - totalCost;
   const totalGainLossPercent = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
   const dayChange = enriched.reduce((sum, p) => {
-    const realQuote = realPrices[p.ticker];
-    if (realQuote) {
-      return sum + p.shares * realQuote.change;
-    }
+    const realQuote = realPrices[p.stock.ticker];
+    if (realQuote) return sum + p.shares * realQuote.change;
     return sum;
   }, 0);
 
-  const totalValueDisplay = hasRealPrices ? `$${formatCompact(totalValue)}` : "—";
-  const dayChangeDisplay = hasRealPrices ? `${dayChange >= 0 ? "+" : ""}$${formatCompact(dayChange)}` : "—";
+  const totalValueDisplay = hasRealPrices ? `$${totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—";
+  const dayChangeDisplay = hasRealPrices ? `${dayChange >= 0 ? "+" : ""}$${Math.abs(dayChange).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—";
   const dayChangePercent = hasRealPrices && totalValue > 0 ? (dayChange / totalValue) * 100 : 0;
   const totalReturnDisplay = hasRealPrices ? formatCurrency(totalGainLoss) : "—";
 
-  if (!mounted) {
+  // Not signed in
+  if (isSignedIn === false) {
     return (
       <div className="space-y-6">
-        <div className="flex items-end justify-between">
-          <div>
-            <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
-              <span className="gradient-text">Portfolio</span>
-            </h1>
-            <p className="mt-1 text-xs text-muted sm:text-sm">Track your positions and performance</p>
-          </div>
+        <div>
+          <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
+            <span className="gradient-text">Portfolio</span>
+          </h1>
+          <p className="mt-1 text-xs text-muted sm:text-sm">Track your positions and performance</p>
         </div>
         <GlassCard>
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Briefcase className="mb-4 h-10 w-10 text-muted" />
-            <p className="text-sm text-muted">Loading...</p>
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-accent/10">
+              <LogIn className="h-8 w-8 text-accent" />
+            </div>
+            <h3 className="mb-1 font-display text-lg font-semibold">Sign in to access your portfolio</h3>
+            <p className="mb-6 max-w-sm text-sm text-muted">
+              Your portfolio is synced across devices and secured to your account.
+            </p>
+            <Link href="/sign-in">
+              <GradientButton variant="brand" size="md">
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </GradientButton>
+            </Link>
+          </div>
+        </GlassCard>
+      </div>
+    );
+  }
+
+  // Loading
+  if (loading && positions.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
+            <span className="gradient-text">Portfolio</span>
+          </h1>
+          <p className="mt-1 text-xs text-muted sm:text-sm">Track your positions and performance</p>
+        </div>
+        <GlassCard>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Loader2 className="mb-4 h-8 w-8 animate-spin text-muted" />
+            <p className="text-sm text-muted">Loading your portfolio...</p>
+          </div>
+        </GlassCard>
+      </div>
+    );
+  }
+
+  // Error
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
+            <span className="gradient-text">Portfolio</span>
+          </h1>
+        </div>
+        <GlassCard>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <p className="text-sm text-red-400">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 rounded-lg border border-border bg-panel px-4 py-2 text-sm font-medium hover:bg-panel-elevated"
+            >
+              Retry
+            </button>
           </div>
         </GlassCard>
       </div>
@@ -231,9 +266,9 @@ export default function PortfolioPage() {
           </h1>
           <div className="mt-1 flex items-center gap-2 text-xs text-muted sm:text-sm">
             <span>Track your positions and performance</span>
-            {lastUpdated && (
+            {lastUpdated && positions.length > 0 && (
               <>
-                <span className="text-white/20">·</span>
+                <span>·</span>
                 <span className="text-[10px] text-muted">
                   Live · {lastUpdated.toLocaleTimeString()}
                 </span>
@@ -245,12 +280,17 @@ export default function PortfolioPage() {
           <button
             onClick={() => refreshPrices(true)}
             disabled={refreshing || positions.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel-elevated px-3 py-2 text-xs text-muted transition-colors hover:bg-panel-elevated hover:text-foreground disabled:opacity-50"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-border bg-panel-elevated px-3 text-xs text-muted transition-colors hover:text-foreground disabled:opacity-50"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
             <span className="hidden sm:inline">Refresh</span>
           </button>
-          <GradientButton variant="brand" size="sm" className="w-full sm:w-auto" onClick={() => setDialogOpen(true)}>
+          <GradientButton
+            variant="brand"
+            size="sm"
+            className="min-h-[44px] w-full sm:w-auto"
+            onClick={() => setDialogOpen(true)}
+          >
             <Plus className="h-3.5 w-3.5" />
             Add Position
           </GradientButton>
@@ -258,7 +298,6 @@ export default function PortfolioPage() {
       </div>
 
       {positions.length === 0 ? (
-        /* Empty State */
         <GlassCard>
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-accent/10">
@@ -266,7 +305,7 @@ export default function PortfolioPage() {
             </div>
             <h3 className="mb-1 font-display text-lg font-semibold">No positions yet</h3>
             <p className="mb-6 max-w-sm text-sm text-muted">
-              Add your first position to start tracking your portfolio performance and allocation.
+              Add your first position to start tracking your portfolio performance and allocation. Your data is saved to your account and syncs across devices.
             </p>
             <GradientButton variant="brand" size="md" onClick={() => setDialogOpen(true)}>
               <Plus className="h-4 w-4" />
@@ -319,10 +358,10 @@ export default function PortfolioPage() {
               </div>
               <PortfolioAllocation
                 items={enriched.map((p, i) => ({
-                  name: p.ticker,
+                  name: p.stock.ticker,
                   value: p.currentValue,
                   color: COLORS[i % COLORS.length],
-                  percent: (p.currentValue / totalValue) * 100,
+                  percent: totalValue > 0 ? (p.currentValue / totalValue) * 100 : 0,
                 }))}
               />
             </GlassCard>
@@ -355,26 +394,26 @@ export default function PortfolioPage() {
                   {enriched.map((p) => (
                     <tr key={p.id} className="hover:bg-panel">
                       <td className="px-4 py-3">
-                        <Link href={`/stock/${p.ticker}`} className="flex items-center gap-2">
+                        <Link href={`/stock/${p.stock.ticker}`} className="flex items-center gap-2">
                           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10 font-mono text-[10px] font-bold text-accent">
-                            {p.ticker.slice(0, 2)}
+                            {p.stock.ticker.slice(0, 2)}
                           </div>
-                          <div>
-                            <p className="font-mono text-xs font-bold">{p.ticker}</p>
-                            <p className="hidden text-[10px] text-muted sm:block">{p.name}</p>
+                          <div className="min-w-0">
+                            <p className="truncate font-mono text-xs font-bold">{p.stock.ticker}</p>
+                            <p className="hidden truncate text-[10px] text-muted sm:block">{p.name}</p>
                           </div>
                         </Link>
                       </td>
                       <td className="hidden px-4 py-3 text-right font-mono sm:table-cell">{p.shares}</td>
                       <td className="hidden px-4 py-3 text-right font-mono md:table-cell">{formatCurrency(p.avgCost)}</td>
                       <td className="hidden px-4 py-3 text-right font-mono font-bold md:table-cell">
-                        {realPrices[p.ticker] ? formatCurrency(p.currentPrice) : <span className="text-muted animate-pulse">Loading...</span>}
+                        {realPrices[p.stock.ticker] ? formatCurrency(p.currentPrice) : <span className="text-muted animate-pulse">Loading...</span>}
                       </td>
                       <td className="hidden px-4 py-3 text-right font-mono font-bold lg:table-cell">
-                        {realPrices[p.ticker] ? formatCurrency(p.currentValue) : <span className="text-muted animate-pulse">Loading...</span>}
+                        {realPrices[p.stock.ticker] ? formatCurrency(p.currentValue) : <span className="text-muted animate-pulse">Loading...</span>}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {realPrices[p.ticker] ? (
+                        {realPrices[p.stock.ticker] ? (
                           <div className="flex items-center justify-end gap-1">
                             {p.gainLoss >= 0 ? (
                               <TrendingUp className="h-3 w-3 text-positive" />
@@ -405,7 +444,7 @@ export default function PortfolioPage() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button
-                          onClick={() => removePosition(p.id)}
+                          onClick={() => handleRemovePosition(p.id)}
                           className="rounded-md p-1.5 text-muted transition-colors hover:bg-red/10 hover:text-red"
                           title="Remove position"
                         >
@@ -449,7 +488,6 @@ export default function PortfolioPage() {
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Ticker Search */}
             <div>
               <label className="mb-1.5 block text-xs font-medium text-muted">Stock</label>
               <div className="relative">
@@ -521,7 +559,6 @@ export default function PortfolioPage() {
               )}
             </div>
 
-            {/* Shares */}
             <div>
               <label className="mb-1.5 block text-xs font-medium text-muted">Shares</label>
               <input
@@ -535,7 +572,6 @@ export default function PortfolioPage() {
               />
             </div>
 
-            {/* Average Cost */}
             <div>
               <label className="mb-1.5 block text-xs font-medium text-muted">Average Cost per Share</label>
               <input
@@ -549,7 +585,6 @@ export default function PortfolioPage() {
               />
             </div>
 
-            {/* Preview */}
             {selectedTicker && shares && avgCost && (
               <div className="rounded-lg border border-border bg-panel p-3">
                 <div className="flex justify-between text-xs">
@@ -582,16 +617,30 @@ export default function PortfolioPage() {
               </div>
             )}
 
-            {/* Submit */}
+            {submitError && (
+              <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-2 text-xs text-red-400">
+                {submitError}
+              </div>
+            )}
+
             <GradientButton
               variant="brand"
               size="md"
               className="w-full"
-              disabled={!selectedTicker || !shares || !avgCost}
-              onClick={addPosition}
+              disabled={!selectedTicker || !shares || !avgCost || submitting}
+              onClick={handleAddPosition}
             >
-              <Plus className="h-4 w-4" />
-              Add Position
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" />
+                  Add Position
+                </>
+              )}
             </GradientButton>
           </div>
         </DialogContent>

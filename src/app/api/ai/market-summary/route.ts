@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getMarketSummary, type MarketSummary } from "@/lib/services/python-client";
 import { generatePriceHistory, getStockInfo, fetchRealPriceServer } from "@/lib/services/market-mock";
+import { checkAIRateLimit } from "@/lib/security/ai-rate-limit";
 
 const TICKERS = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META", "JPM"];
 
@@ -40,7 +41,10 @@ async function generateMockMarketSummary(): Promise<MarketSummary> {
   };
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limit = await checkAIRateLimit(request);
+  if (limit.blocked) return limit.response!;
+
   try {
     await Promise.allSettled(TICKERS.map((t) => fetchRealPriceServer(t)));
     const stockData: Record<string, ReturnType<typeof generatePriceHistory>> = {};

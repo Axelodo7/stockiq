@@ -3,7 +3,8 @@ import { success, validationError, handleApiError } from "@/lib/api-response";
 import { tickerSchema } from "@/lib/validation/schemas";
 import { perIPLimit } from "@/lib/security/rate-limit";
 import { runBacktest } from "@/lib/services/python-client";
-import { generatePriceHistory, getStockInfo, fetchRealPriceServer } from "@/lib/services/market-mock";
+import { fetchAlpacaBars, fetchYahooBars } from "@/lib/services/market-api";
+import { DEFAULT_COMMISSION, DEFAULT_SLIPPAGE_BPS } from "@/lib/trading-costs";
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for") || "unknown";
@@ -22,62 +23,85 @@ export async function POST(request: NextRequest) {
     const ticker = parsed.data;
     const initialCapital = body.initial_capital || 10000;
     const modelType = (body.model_type || "ENSEMBLE") as string;
+    const commission = typeof body.commission === "number" ? body.commission : DEFAULT_COMMISSION;
+    const slippageBps = typeof body.slippage_bps === "number" ? body.slippage_bps : DEFAULT_SLIPPAGE_BPS;
 
-    const realPrice = await fetchRealPriceServer(ticker);
-    const mockStock = getStockInfo(ticker);
-    const stockPrice = realPrice || mockStock.price || 100;
-    const priceHistory = generatePriceHistory(stockPrice);
+    // Fetch REAL historical OHLCV — Alpaca primary, Yahoo fallback.
+    // Two years of daily bars gives the backtester enough walk-forward runway.
+    const start = new Date();
+    start.setFullYear(start.getFullYear() - 2);
+    const startDate = start.toISOString().split("T")[0];
 
-    const ohlcv = priceHistory.map((d) => ({
-      date: d.date,
-      open: d.open,
-      high: d.high,
-      low: d.low,
-      close: d.close,
-      volume: d.volume,
+    let bars = await fetchAlpacaBars(ticker, "1Day", startDate, 600);
+    let dataSource: "alpaca" | "yahoo" = "alpaca";
+
+    if (bars.length < 70) {
+      bars = await fetchYahooBars(ticker, "2y");
+      dataSource = "yahoo";
+    }
+
+    if (bars.length < 70) {
+      return success(
+        {
+          ticker,
+          model_type: modelType,
+          error: "insufficient_data",
+          message: `Need at least 70 historical bars to backtest ${ticker}. Only ${bars.length} available from market data providers.`,
+          total_return: 0,
+          annualized_return: null,
+          sharpe_ratio: null,
+          max_drawdown: 0,
+          win_rate: 0,
+          profit_factor: null,
+          total_trades: 0,
+          equity_curve: [],
+          trades: [],
+          initial_capital: initialCapital,
+          final_capital: initialCapital,
+        },
+        200
+      );
+    }
+
+    const ohlcv = bars.map((b) => ({
+      date: b.date,
+      open: b.open,
+      high: b.high,
+      low: b.low,
+      close: b.close,
+      volume: b.volume,
     }));
 
-    const result = await runBacktest(ticker, modelType, ohlcv, initialCapital);
+    const result = await runBacktest(ticker, modelType, ohlcv, initialCapital, commission, slippageBps);
 
     if (result) {
-      return success(result);
+      return success({ ...result, data_source: dataSource, bars_used: ohlcv.length, commission, slippage_bps: slippageBps });
     }
 
-    // Fallback mock response
-    const equityCurve = [];
-    let capital = initialCapital;
-    const now = new Date();
-    for (let i = 365; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      const dailyReturn = (Math.random() - 0.48) * 0.02;
-      capital *= 1 + dailyReturn;
-      equityCurve.push({
-        date: date.toISOString().split("T")[0],
-        equity: Math.round(capital * 100) / 100,
-        position: 0,
-      });
-    }
-
-    const totalReturn = (capital - initialCapital) / initialCapital;
-    const wins = Math.floor(120 + Math.random() * 40);
-    const losses = Math.floor(80 + Math.random() * 30);
-
-    return success({
-      ticker,
-      model_type: modelType,
-      total_return: Math.round(totalReturn * 100) / 100,
-      annualized_return: Math.round(totalReturn * 100) / 100,
-      sharpe_ratio: Math.round((1.0 + Math.random() * 0.8) * 100) / 100,
-      max_drawdown: Math.round((5 + Math.random() * 10) * 100) / 100,
-      win_rate: Math.round((wins / (wins + losses)) * 10000) / 10000,
-      profit_factor: Math.round((1.2 + Math.random() * 0.5) * 100) / 100,
-      total_trades: wins + losses,
-      equity_curve: equityCurve,
-      trades: [],
-      initial_capital: initialCapital,
-      final_capital: Math.round(capital * 100) / 100,
-    });
+    // Python service unavailable — surface an honest response rather than fake numbers.
+    return success(
+      {
+        ticker,
+        model_type: modelType,
+        error: "model_unavailable",
+        message:
+          "Real market data was loaded, but no trained model is available for this ticker/model. Train a model first, then re-run the backtest.",
+        data_source: dataSource,
+        bars_used: ohlcv.length,
+        total_return: 0,
+        annualized_return: null,
+        sharpe_ratio: null,
+        max_drawdown: 0,
+        win_rate: 0,
+        profit_factor: null,
+        total_trades: 0,
+        equity_curve: [],
+        trades: [],
+        initial_capital: initialCapital,
+        final_capital: initialCapital,
+      },
+      200
+    );
   } catch (error) {
     return handleApiError(error);
   }

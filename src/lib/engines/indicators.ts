@@ -52,8 +52,15 @@ export function RSI(prices: number[], period = 14): (number | null)[] {
     } else {
       const avgGain = gains.slice(-period).reduce((a, b) => a + b, 0) / period;
       const avgLoss = losses.slice(-period).reduce((a, b) => a + b, 0) / period;
-      if (avgLoss === 0) {
+      if (avgGain === 0 && avgLoss === 0) {
+        // Flat price action — neutral, not overbought
+        result.push(50);
+      } else if (avgLoss === 0) {
+        // Only gains, no losses — maximally overbought
         result.push(100);
+      } else if (avgGain === 0) {
+        // Only losses, no gains — maximally oversold
+        result.push(0);
       } else {
         const rs = avgGain / avgLoss;
         result.push(100 - 100 / (1 + rs));
@@ -163,13 +170,14 @@ export function Stochastic(
   kPeriod = 14,
   dPeriod = 3
 ): StochasticResult {
-  const kValues: number[] = [];
+  const kValues: (number | null)[] = [];
   const k: (number | null)[] = [];
   const d: (number | null)[] = [];
 
   for (let i = 0; i < data.length; i++) {
     if (i < kPeriod - 1) {
       k.push(null);
+      kValues.push(null);
       continue;
     }
     const slice = data.slice(i - kPeriod + 1, i + 1);
@@ -181,12 +189,13 @@ export function Stochastic(
   }
 
   for (let i = 0; i < k.length; i++) {
-    if (k[i] === null || kValues.length < dPeriod) {
+    // %D requires dPeriod valid %K values ending at index i
+    if (i < kPeriod - 1 + dPeriod - 1) {
       d.push(null);
-    } else {
-      const slice = kValues.slice(-dPeriod);
-      d.push(slice.reduce((a, b) => a + b, 0) / dPeriod);
+      continue;
     }
+    const slice = kValues.slice(i - dPeriod + 1, i + 1).filter((v): v is number => v !== null);
+    d.push(slice.length === dPeriod ? slice.reduce((a, b) => a + b, 0) / dPeriod : null);
   }
 
   return { k, d };
